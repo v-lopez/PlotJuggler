@@ -14,23 +14,34 @@ QT5_WRAP_UI ( UI_SRC
     )
 
 SET( PLOTTER_SRC
-    main.cpp
-    mainwindow.cpp
-    plotwidget.cpp
-    plotmatrix.cpp
-    removecurvedialog.cpp
-    plotmagnifier.cpp
-    plotzoomer.cpp
     busydialog.cpp
     busytaskdialog.cpp
-    customtracker.cpp
     curvecolorpick.cpp
-    plotdata_qwt.cpp
+    main.cpp
+    mainwindow.cpp
     filterablelistwidget.cpp
+    plotmatrix.cpp
+    removecurvedialog.cpp
     tabbedplotwidget.cpp
     subwindow.cpp
 
-    mainwindow.h
+    customtracker.h
+    plotcurve.h
+    plotseries.h
+    plotwidget.h
+
+    impl/plotlegend.h
+    impl/plotmagnifier.h
+    impl/plotzoomer.h
+
+    impl/customtracker.cpp
+    impl/plotcurve.cpp
+    impl/plotlegend.cpp
+    impl/plotseries.cpp
+    impl/plotmagnifier.cpp
+    impl/plotwidget.cpp
+    impl/plotzoomer.cpp
+
     ../common/selectlistdialog.h
     ../include/PlotJuggler/plotdata.h
     )

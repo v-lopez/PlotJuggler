@@ -2,8 +2,8 @@
 #include <QMouseEvent>
 
 
-PlotZoomer::PlotZoomer(QWidget *canvas, bool doReplot):
-    QwtPlotZoomer(canvas,doReplot)
+PlotZoomer::PlotZoomer(QWidget *canvas):
+    QwtPlotZoomer(canvas, false)
 {
 
 }

@@ -1,43 +1,38 @@
 #ifndef CUSTOMTRACKER_H
 #define CUSTOMTRACKER_H
 
-
-#include <qwt_plot_picker.h>
-#include <qwt_picker_machine.h>
-#include <qwt_plot_marker.h>
 #include <QEvent>
+#include <QPointF>
+#include <QEvent>
+#include <memory>
+#include "plotwidget.h"
 
-class QwtPlotCurve;
-
+class PlotWidget;
+class PlotSeries;
 
 class CurveTracker: public QObject
 {
     Q_OBJECT
 public:
-    explicit CurveTracker(QwtPlot * );
+    explicit CurveTracker(PlotWidget *parent );
+    virtual ~CurveTracker();
 
     QPointF actualPosition() const;
 
 public slots:
 
-    void setPosition(const QPointF & );
-
     void setEnabled(bool enable);
 
+    void setPosition(const QPointF & );
 
 private:
-    QLineF  curveLineAt( const QwtPlotCurve *, double x ) const;
-
-    QPointF transform( QPoint);
-    QPoint  invTransform( QPointF);
+    QLineF curveLineAt(const PlotCurve *, double x ) const;
 
     QPointF _prev_trackerpoint;
-    std::vector<QwtPlotMarker*> _marker;
-    QwtPlotMarker* _line_marker;
-    QwtPlotMarker* _text_marker;
-    QwtPlot* _plot;
     bool _visible;
 
+    struct Pimpl;
+    std::unique_ptr<Pimpl> p;
 };
 
 #endif // CUSTOMTRACKER_H

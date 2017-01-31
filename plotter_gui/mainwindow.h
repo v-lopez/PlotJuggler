@@ -116,7 +116,7 @@ private:
 
     void rearrangeGridLayout();
 
-    QColor randomColorHint();
+    QColor getColorHint();
 
     void loadPlugins(QString subdir_name);
 

@@ -1,5 +1,5 @@
 project(plotjuggler)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets PrintSupport Concurrent Xml)
 
@@ -28,16 +28,14 @@ if(catkin_FOUND)
         )
 endif()
 
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_INCLUDE_DIRECTORIES_BEFORE ON)
 
 set(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 
-IF (NOT WIN32)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fPIC")
-ENDIF()
 
 include_directories(
     ${Qt5Widgets_INCLUDE_DIRS}
@@ -64,10 +62,11 @@ endif()
 
 add_subdirectory( color_widgets )
 add_subdirectory( qwt/src )
+#add_subdirectory( qtchart )
 add_subdirectory( plotter_gui )
 
-add_subdirectory( plugins/DataLoadCSV )
-add_subdirectory( plugins/DataStreamSample )
+#add_subdirectory( plugins/DataLoadCSV )
+#add_subdirectory( plugins/DataStreamSample )
 
 if(catkin_FOUND)
     add_subdirectory( plugins/ROS )

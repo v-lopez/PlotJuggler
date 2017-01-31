@@ -2,7 +2,6 @@
 #define _PLOT_MATRIX_H_
 
 #include <qframe.h>
-#include <qwt_plot.h>
 #include <QGridLayout>
 #include "plotwidget.h"
 
@@ -77,8 +76,6 @@ private:
     bool _horizontal_link;
 
     PlotDataMap *_mapped_data;
-
-
     QString _name;
 
 signals:

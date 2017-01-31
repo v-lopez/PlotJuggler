@@ -18,6 +18,7 @@
 #include <set>
 #include <QInputDialog>
 #include <QCommandLineParser>
+#include <QTimer>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -26,7 +27,7 @@
 #include "filterablelistwidget.h"
 #include "tabbedplotwidget.h"
 #include "selectlistdialog.h"
-
+#include "customtracker.h"
 
 void MainWindow::parseCommandLine()
 {
@@ -293,7 +294,7 @@ void MainWindow::createActions()
 }
 
 
-QColor MainWindow::randomColorHint()
+QColor MainWindow::getColorHint()
 {
     static int index = 0;
     QColor color;
@@ -398,7 +399,7 @@ void MainWindow::buildData()
             t += 0.001;
             plot->pushBack( PlotData::Point( t,  A*sin(B*t + C) + D*t*0.02 ) ) ;
         }
-        QColor color = randomColorHint();
+        QColor color = getColorHint();
         plot->setColorHint( color );
 
         _mapped_plot_data.numeric.insert( std::make_pair( name.toStdString(), plot) );
@@ -723,7 +724,7 @@ void MainWindow::importPlotDataMap(const PlotDataMap& mapped_data)
         // this is a new plot
         if( plot_with_same_name == _mapped_plot_data.numeric.end() )
         {
-            QColor color = randomColorHint();
+            QColor color = getColorHint();
             plot->setColorHint( color );
             _curvelist_widget->addItem( new QListWidgetItem( qname ) );
             _mapped_plot_data.numeric.insert( std::make_pair(name, plot) );

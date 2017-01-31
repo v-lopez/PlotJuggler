@@ -1,39 +1,48 @@
-#include "plotwidget.h"
 #include <QDebug>
 #include <QDrag>
 #include <QMimeData>
 #include <QDragEnterEvent>
+#include <QAction>
+#include <QMessageBox>
+#include <QMenu>
+#include <QApplication>
+#include <QActionGroup>
+#include <set>
+#include <limits>
+#include <memory>
+
+#include "plotwidget.h"
+#include "removecurvedialog.h"
+#include "curvecolorpick.h"
+#include "plotmagnifier.h"
+#include "plotzoomer.h"
+#include "customtracker.h"
+#include "plotcurve.h"
+#include "plotlegend.h"
+
 #include <qwt_plot_canvas.h>
 #include <qwt_scale_engine.h>
 #include <qwt_plot_layout.h>
 #include <qwt_scale_draw.h>
-#include <QAction>
-#include <QMessageBox>
-#include <QMenu>
-#include <limits>
-#include "removecurvedialog.h"
-#include "curvecolorpick.h"
-#include <QApplication>
-#include <set>
-#include <memory>
-#include <qwt_text.h>
-#include <QActionGroup>
 
-//#include <qwt_plot_opengl_canvas.h>
-//#include <qwt_plot_glcanvas.h>
+#include <qwt_plot_grid.h>
+#include <qwt_plot_curve.h>
 
+struct PlotWidget::Pimpl
+{
+    PlotZoomer* zoomer;
+    PlotMagnifier* magnifier;
+    CurveTracker* tracker;
+    PlotLegend* legend;
+    QwtPlotGrid* grid;
+};
 
 PlotWidget::PlotWidget(PlotDataMap *datamap, QWidget *parent):
     QwtPlot(parent),
-    _zoomer( 0 ),
-    _magnifier(0 ),
-    _panner( 0 ),
-    _tracker ( 0 ),
-    _legend( 0 ),
-    _grid( 0 ),
     _mapped_data( datamap ),
-    _show_line_and_points(false),
-    _current_transform( PlotDataQwt::noTransform )
+    _line_style(PlotCurve::LINES),
+    _current_transform( PlotSeries::noTransform ),
+    p( new Pimpl )
 {
     this->setAcceptDrops( true );
     this->setMinimumWidth( 100 );
@@ -42,11 +51,7 @@ PlotWidget::PlotWidget(PlotDataMap *datamap, QWidget *parent):
     this->sizePolicy().setHorizontalPolicy( QSizePolicy::Expanding);
     this->sizePolicy().setVerticalPolicy( QSizePolicy::Expanding);
 
-    //QwtPlotOpenGLCanvas *canvas = new QwtPlotOpenGLCanvas(this);
-    //QwtPlotGLCanvas *canvas = new QwtPlotGLCanvas(this);
     QwtPlotCanvas *canvas = new QwtPlotCanvas(this);
-
-
     canvas->setFrameStyle( QFrame::NoFrame );
     canvas->setPaintAttribute( QwtPlotCanvas::BackingStore, true );
 
@@ -60,41 +65,43 @@ PlotWidget::PlotWidget(PlotDataMap *datamap, QWidget *parent):
     this->canvas()->installEventFilter( this );
 
     //--------------------------
-    _grid = new QwtPlotGrid();
-    _zoomer = ( new PlotZoomer( this->canvas() ) );
-    _magnifier = ( new PlotMagnifier( this->canvas() ) );
-    _panner = ( new QwtPlotPanner( this->canvas() ) );
-    _tracker = ( new CurveTracker( this ) );
+    p->grid = new QwtPlotGrid();
+    p->zoomer = ( new PlotZoomer( this->canvas() ) );
+    p->magnifier = ( new PlotMagnifier( this->canvas() ) );
+    p->tracker = ( new CurveTracker( this ) );
 
-    _grid->setPen(QPen(Qt::gray, 0.0, Qt::DotLine));
+    p->grid->setPen(QPen(Qt::gray, 0.0, Qt::DotLine));
 
-    _zoomer->setRubberBandPen( QColor( Qt::red , 1, Qt::DotLine) );
-    _zoomer->setTrackerPen( QColor( Qt::green, 1, Qt::DotLine ) );
-    _zoomer->setMousePattern( QwtEventPattern::MouseSelect1, Qt::LeftButton, Qt::NoModifier );
-    connect(_zoomer, SIGNAL(zoomed(const QRectF&)), this, SLOT(on_externallyResized(const QRectF&)) );
+    p->zoomer->setRubberBandPen( QColor( Qt::red , 1, Qt::DotLine) );
+    p->zoomer->setTrackerPen( QColor( Qt::green, 1, Qt::DotLine ) );
+    connect(p->zoomer, SIGNAL(zoomed(const QRectF&)), this, SLOT(on_externallyResized(const QRectF&)) );
 
-    _magnifier->setAxisEnabled(xTop, false);
-    _magnifier->setAxisEnabled(yRight, false);
+    p->magnifier->setAxisEnabled(xTop, false);
+    p->magnifier->setAxisEnabled(yRight, false);
 
     // disable right button. keep mouse wheel
-    _magnifier->setMouseButton( Qt::NoButton );
-    connect(_magnifier, SIGNAL(rescaled(const QRectF&)), this, SLOT(on_externallyResized(const QRectF&)) );
-    connect(_magnifier, SIGNAL(rescaled(const QRectF&)), this, SLOT(replot()) );
-
-    _panner->setMouseButton(  Qt::MiddleButton, Qt::NoModifier);
+    p->magnifier->setMouseButton( Qt::NoButton );
+    connect(p->magnifier, SIGNAL(rescaled(const QRectF&)), this, SLOT(on_externallyResized(const QRectF&)) );
+    connect(p->magnifier, SIGNAL(rescaled(const QRectF&)), this, SLOT(replot()) );
 
     this->canvas()->setContextMenuPolicy( Qt::ContextMenuPolicy::CustomContextMenu );
     connect( canvas, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(canvasContextMenuTriggered(QPoint)) );
     //-------------------------
 
     buildActions();
-    buildLegend();
+
+    p->legend = new PlotLegend(this);
 
     this->canvas()->setMouseTracking(true);
     this->canvas()->installEventFilter(this);
 
     // this->axisScaleDraw( QwtPlot::xBottom )->enableComponent( QwtAbstractScaleDraw::Labels, false );
     //  this->axisScaleDraw( QwtPlot::yLeft   )->enableComponent( QwtAbstractScaleDraw::Labels, false );
+}
+
+PlotWidget::~PlotWidget()
+{
+
 }
 
 void PlotWidget::buildActions()
@@ -158,45 +165,9 @@ void PlotWidget::buildActions()
     transform_group->addAction(_action_noTransform);
     transform_group->addAction(_action_1stDerivativeTransform);
     transform_group->addAction(_action_2ndDerivativeTransform);
-
-    //  menu.addAction(_action_firstDerivativeTransform);
-    //  menu.addAction(_action_secondDerivativeTransform);
-}
-
-void PlotWidget::buildLegend()
-{
-    _legend = new QwtPlotLegendItem();
-    _legend->attach( this );
-
-    _legend->setRenderHint( QwtPlotItem::RenderAntialiased );
-    QColor color( Qt::black );
-    _legend->setTextPen( color );
-    _legend->setBorderPen( color );
-    QColor c( Qt::white );
-    c.setAlpha( 200 );
-    _legend->setBackgroundBrush( c );
-
-    _legend->setMaxColumns( 1 );
-    _legend->setAlignment( Qt::Alignment( Qt::AlignTop | Qt::AlignRight ) );
-    _legend->setBackgroundMode( QwtPlotLegendItem::BackgroundMode::LegendBackground   );
-
-    _legend->setBorderRadius( 6 );
-    _legend->setMargin( 5 );
-    _legend->setSpacing( 0 );
-    _legend->setItemMargin( 0 );
-
-    QFont font = _legend->font();
-    font.setPointSize( 8 );
-    _legend->setFont( font );
-    _legend->setVisible( true );
 }
 
 
-
-PlotWidget::~PlotWidget()
-{
-
-}
 
 bool PlotWidget::addCurve(const QString &name, bool do_replot)
 {
@@ -214,27 +185,12 @@ bool PlotWidget::addCurve(const QString &name, bool do_replot)
     PlotDataPtr data = it->second;
 
     {
-        auto curve = std::shared_ptr< QwtPlotCurve >( new QwtPlotCurve(name) );
+        auto curve = std::make_shared<PlotCurve>( name, data );
 
-        PlotDataQwt* plot_qwt = new PlotDataQwt( data );
+        curve->setStyle( _line_style);
 
-        curve->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
-        //  curve->setPaintAttribute( QwtPlotCurve::FilterPointsAggressive, true );
-
-        curve->setData( plot_qwt );
-
-        if( _show_line_and_points ) {
-            curve->setStyle( QwtPlotCurve::LinesAndDots);
-        }
-        else{
-            curve->setStyle( QwtPlotCurve::Lines);
-        }
-
-        curve->setPen( data->getColorHint(),  0.7 );
-        curve->setRenderHint( QwtPlotItem::RenderAntialiased, true );
-
+        curve->setColor( data->getColorHint(),  0.7 );
         curve->attach( this );
-
         _curve_list.insert( std::make_pair(name, curve));
     }
 
@@ -248,7 +204,6 @@ bool PlotWidget::addCurve(const QString &name, bool do_replot)
     {
         replot();
     }
-
     return true;
 }
 
@@ -269,7 +224,7 @@ bool PlotWidget::isEmpty() const
     return _curve_list.empty();
 }
 
-const std::map<QString, std::shared_ptr<QwtPlotCurve> > &PlotWidget::curveList() const
+const std::map<QString, std::shared_ptr<PlotCurve> > &PlotWidget::curveList() const
 {
     return _curve_list;
 }
@@ -349,7 +304,10 @@ void PlotWidget::dropEvent(QDropEvent *event)
 
 void PlotWidget::detachAllCurves()
 {
-    this->detachItems(QwtPlotItem::Rtti_PlotCurve, false);
+    for(auto& it: curves)
+    {
+        it.second->detach();
+    }
     _curve_list.erase(_curve_list.begin(), _curve_list.end());
     replot();
 }
@@ -372,19 +330,19 @@ QDomElement PlotWidget::xmlSaveState( QDomDocument &doc) const
         auto curve = it->second;
         QDomElement curve_el = doc.createElement("curve");
         curve_el.setAttribute( "name",name);
-        curve_el.setAttribute( "R", curve->pen().color().red());
-        curve_el.setAttribute( "G", curve->pen().color().green());
-        curve_el.setAttribute( "B", curve->pen().color().blue());
+        curve_el.setAttribute( "R", curve->color().red());
+        curve_el.setAttribute( "G", curve->color().green());
+        curve_el.setAttribute( "B", curve->color().blue());
 
         plot_el.appendChild(curve_el);
     }
 
     QDomElement transform  = doc.createElement("transform");
-    if( _current_transform == PlotDataQwt::firstDerivative )
+    if( _current_transform == PlotSeries::firstDerivative )
     {
         transform.setAttribute("value", "firstDerivative" );
     }
-    else if ( _current_transform == PlotDataQwt::secondDerivative )
+    else if ( _current_transform == PlotSeries::secondDerivative )
     {
         transform.setAttribute("value", "secondDerivative" );
     }
@@ -415,7 +373,7 @@ bool PlotWidget::xmlLoadState(QDomElement &plot_widget, QMessageBox::StandardBut
         if(  _mapped_data->numeric.find(curve_name.toStdString()) != _mapped_data->numeric.end() )
         {
             addCurve(curve_name, false);
-            _curve_list[curve_name]->setPen( color, 1.0);
+            _curve_list[curve_name]->setColor( color, 1.0);
             added_curve_names.insert(curve_name );
         }
         else{
@@ -501,9 +459,14 @@ QRectF PlotWidget::currentBoundingRect() const
     return rect;
 }
 
-CurveTracker *PlotWidget::tracker()
+const CurveTracker * PlotWidget::tracker() const
 {
-    return _tracker;
+    return p->tracker;
+}
+
+CurveTracker* PlotWidget::tracker()
+{
+    return p->tracker;
 }
 
 void PlotWidget::setScale(QRectF rect, bool emit_signal)
@@ -518,17 +481,16 @@ void PlotWidget::setScale(QRectF rect, bool emit_signal)
 
 void PlotWidget::activateLegent(bool activate)
 {
-    if( activate ) _legend->attach(this);
-    else           _legend->detach();
+    p->legend->setVisible(activate);
 }
 
 void PlotWidget::activateGrid(bool activate)
 {
-    _grid->enableX(activate);
-    _grid->enableXMin(activate);
-    _grid->enableY(activate);
-    _grid->enableYMin(activate);
-    _grid->attach(this);
+    p->grid->enableX(activate);
+    p->grid->enableXMin(activate);
+    p->grid->enableY(activate);
+    p->grid->enableYMin(activate);
+    p->grid->attach(this);
 }
 
 
@@ -538,8 +500,8 @@ void PlotWidget::setAxisScale(int axisId, double min, double max, double step)
     {
         for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
         {
-            PlotDataQwt* plot = static_cast<PlotDataQwt*>( it->second->data() );
-            plot->setSubsampleFactor( );
+            PlotSeries& plot = ( it->second->series() );
+            plot.setSubsampleFactor( );
         }
     }
     QwtPlot::setAxisScale( axisId, min, max, step);
@@ -558,9 +520,9 @@ std::pair<double,double> PlotWidget::maximumRangeX() const
     bool first = true;
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
-        PlotDataQwt* plot = static_cast<PlotDataQwt*>( it->second->data() );
-        plot->updateData(false);
-        auto range_X = plot->getRangeX();
+        PlotSeries& plot = ( it->second->series() );
+        plot.updateData(false);
+        auto range_X = plot.getRangeX();
 
         if( !range_X ) continue;
 
@@ -581,7 +543,7 @@ std::pair<double,double> PlotWidget::maximumRangeX() const
         left  -= 0.1;
     }
 
-    _magnifier->setAxisLimits( xBottom, left, right);
+    p->magnifier->setAxisLimits( xBottom, left, right);
     return std::make_pair( left, right);
 }
 
@@ -594,8 +556,8 @@ std::pair<double,double>  PlotWidget::maximumRangeY(bool current_canvas) const
     bool first = true;
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
-        PlotDataQwt* plot = static_cast<PlotDataQwt*>( it->second->data() );
-        plot->updateData(false);
+        PlotSeries& plot = ( it->second->series() );
+        plot.updateData(false);
 
         double min_X, max_X;
         if( current_canvas )
@@ -609,11 +571,11 @@ std::pair<double,double>  PlotWidget::maximumRangeY(bool current_canvas) const
             max_X = range_X.second;
         }
 
-        const auto range_X = plot->getRangeX();
+        const auto range_X = plot.getRangeX();
         if( !range_X ) continue;
 
-        int X0 = plot->data()->getIndexFromX(std::max(range_X->min, min_X));
-        int X1 = plot->data()->getIndexFromX(std::min(range_X->max, max_X));
+        int X0 = plot.data()->getIndexFromX(std::max(range_X->min, min_X));
+        int X1 = plot.data()->getIndexFromX(std::min(range_X->max, max_X));
 
         if( X0<0 || X1 <0)
         {
@@ -621,7 +583,7 @@ std::pair<double,double>  PlotWidget::maximumRangeY(bool current_canvas) const
             continue;
         }
         else{
-            auto range_Y = plot->getRangeY(X0, X1);
+            auto range_Y = plot.getRangeY(X0, X1);
             if( !range_Y )
             {
                 qDebug() << " invalid range_Y in PlotWidget::maximumRangeY";
@@ -652,7 +614,7 @@ std::pair<double,double>  PlotWidget::maximumRangeY(bool current_canvas) const
         bottom -= margin;
     }
 
-    _magnifier->setAxisLimits( yLeft, bottom, top);
+    p->magnifier->setAxisLimits( yLeft, bottom, top);
     return std::make_pair( bottom,  top);
 }
 
@@ -660,19 +622,18 @@ std::pair<double,double>  PlotWidget::maximumRangeY(bool current_canvas) const
 
 void PlotWidget::replot()
 {
-    if( _zoomer )
-        _zoomer->setZoomBase( false );
+    if( p->zoomer )
+        p->zoomer->setZoomBase( false );
 
-    /* if(_tracker ) {
-        _tracker->refreshPosition( );
+    /* if(p->tracker ) {
+        p->tracker->refreshPosition( );
     }*/
 
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
-        PlotDataQwt* plot = static_cast<PlotDataQwt*>( it->second->data() );
-        plot->updateData(false);
+        PlotSeries& plot = ( it->second->series() );
+        plot.updateData(false);
     }
-
     QwtPlot::replot();
 }
 
@@ -702,7 +663,7 @@ void PlotWidget::on_changeColor_triggered()
     {
         const QString& curve_name = it->first;
         auto curve = it->second;
-        color_by_name.insert(std::make_pair( curve_name, curve->pen().color() ));
+        color_by_name.insert(std::make_pair( curve_name, curve->color() ));
     }
 
     CurveColorPick* dialog = new CurveColorPick(&color_by_name, this);
@@ -715,9 +676,9 @@ void PlotWidget::on_changeColor_triggered()
         const QString& curve_name = it->first;
         auto curve = it->second;
         QColor new_color = color_by_name[curve_name];
-        if( curve->pen().color() != new_color)
+        if( curve->color() != new_color)
         {
-            curve->setPen( color_by_name[curve_name], 1.0 );
+            curve->setColor( color_by_name[curve_name], 1.0 );
             modified = true;
         }
     }
@@ -728,17 +689,11 @@ void PlotWidget::on_changeColor_triggered()
 
 void PlotWidget::on_showPoints_triggered(bool checked)
 {
-    _show_line_and_points = checked;
-    for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
+    _line_style = checked ? PlotCurve::LINES_AND_DOTS : PlotCurve::LINES ;
+
+    for(auto& it: _curve_list)
     {
-        auto curve = it->second;
-        if( _show_line_and_points )
-        {
-            curve->setStyle( QwtPlotCurve::LinesAndDots);
-        }
-        else{
-            curve->setStyle( QwtPlotCurve::Lines);
-        }
+        it.second->setStyle(_line_style);
     }
     replot();
 }
@@ -786,16 +741,16 @@ void PlotWidget::on_zoomOutVertical_triggered(bool emit_signal)
 
 void PlotWidget::on_noTransform_triggered(bool checked )
 {
-    if(_current_transform ==  PlotDataQwt::noTransform) return;
+    if(_current_transform ==  PlotSeries::noTransform) return;
 
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
-        PlotDataQwt* plot = static_cast<PlotDataQwt*>( it->second->data() );
-        plot->setTransform( PlotDataQwt::noTransform );
-        plot->updateData(true);
+        PlotSeries& plot = ( it->second->series() );
+        plot.setTransform( PlotSeries::noTransform );
+        plot.updateData(true);
     }
     this->setTitle("");
-    _current_transform = ( PlotDataQwt::noTransform );
+    _current_transform = ( PlotSeries::noTransform );
 
     on_zoomOutVertical_triggered(false);
     replot();
@@ -804,13 +759,13 @@ void PlotWidget::on_noTransform_triggered(bool checked )
 
 void PlotWidget::on_1stDerivativeTransform_triggered(bool checked)
 {
-    if(_current_transform ==  PlotDataQwt::firstDerivative) return;
+    if(_current_transform ==  PlotSeries::firstDerivative) return;
 
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
-        PlotDataQwt* plot = static_cast<PlotDataQwt*>( it->second->data() );
-        plot->setTransform( PlotDataQwt::firstDerivative );
-        plot->updateData(true);
+        PlotSeries& plot = ( it->second->series() );
+        plot.setTransform( PlotSeries::firstDerivative );
+        plot.updateData(true);
     }
 
     QFont font_title;
@@ -819,7 +774,7 @@ void PlotWidget::on_1stDerivativeTransform_triggered(bool checked)
     text.setFont(font_title);
 
     this->setTitle(text);
-    _current_transform = ( PlotDataQwt::firstDerivative );
+    _current_transform = ( PlotSeries::firstDerivative );
 
     on_zoomOutVertical_triggered(false);
     replot();
@@ -828,13 +783,13 @@ void PlotWidget::on_1stDerivativeTransform_triggered(bool checked)
 
 void PlotWidget::on_2ndDerivativeTransform_triggered(bool checked)
 {
-    if(_current_transform ==  PlotDataQwt::secondDerivative) return;
+    if(_current_transform ==  PlotSeries::secondDerivative) return;
 
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
-        PlotDataQwt* plot = static_cast<PlotDataQwt*>( it->second->data() );
-        plot->setTransform( PlotDataQwt::secondDerivative );
-        plot->updateData(true);
+        PlotSeries& plot = ( it->second->series() );
+        plot.setTransform( PlotSeries::secondDerivative );
+        plot.updateData(true);
     }
 
     QFont font_title;
@@ -843,7 +798,7 @@ void PlotWidget::on_2ndDerivativeTransform_triggered(bool checked)
     text.setFont(font_title);
 
     this->setTitle(text);
-    _current_transform = ( PlotDataQwt::secondDerivative );
+    _current_transform = ( PlotSeries::secondDerivative );
 
     on_zoomOutVertical_triggered(false);
     replot();
@@ -914,8 +869,6 @@ void PlotWidget::mouseReleaseEvent(QMouseEvent *event )
 bool PlotWidget::eventFilter(QObject *obj, QEvent *event)
 {
     static bool isPressed = true;
-
-    // qDebug() <<  event->type();
 
     if ( event->type() == QEvent::MouseButtonPress)
     {

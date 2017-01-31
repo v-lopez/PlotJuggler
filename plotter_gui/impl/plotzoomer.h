@@ -9,7 +9,7 @@ class PlotZoomer : public QwtPlotZoomer
 public:
     PlotZoomer();
 
-    explicit PlotZoomer( QWidget *, bool doReplot = true );
+    explicit PlotZoomer( QWidget * );
 
     virtual ~PlotZoomer() = default;
 protected:

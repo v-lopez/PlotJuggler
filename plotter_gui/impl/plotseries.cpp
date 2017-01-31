@@ -1,9 +1,9 @@
-#include "plotdata_qwt.h"
+#include "plotseries.h"
 #include <limits>
 #include <stdexcept>
 
 
-PlotDataQwt::PlotDataQwt(PlotDataPtr base):
+PlotSeries::PlotSeries(PlotDataPtr base):
     _plot_data(base),
     _subsample(1),
     _transform( noTransform )
@@ -11,7 +11,7 @@ PlotDataQwt::PlotDataQwt(PlotDataPtr base):
 
 }
 
-QPointF PlotDataQwt::sample(size_t i) const
+QPointF PlotSeries::sample(size_t i) const
 {
   if(_transform == noTransform) {
     const auto& p = _plot_data->at( i );
@@ -22,14 +22,14 @@ QPointF PlotDataQwt::sample(size_t i) const
   }
 }
 
-QRectF PlotDataQwt::boundingRect() const
+QRectF PlotSeries::boundingRect() const
 {
     qDebug() << "boundingRect not implemented";
     return QRectF(0,0,1,1);
 }
 
 
-size_t PlotDataQwt::size() const
+size_t PlotSeries::size() const
 {
   if(_transform == noTransform) {
     return _plot_data->size();
@@ -40,7 +40,7 @@ size_t PlotDataQwt::size() const
 }
 
 
-QRectF PlotDataQwt::maximumBoundingRect(double min_X, double max_X)
+QRectF PlotSeries::maximumBoundingRect(double min_X, double max_X)
 {
     int x1 = _plot_data->getIndexFromX( min_X );
     int x2 = _plot_data->getIndexFromX( max_X );
@@ -66,22 +66,22 @@ QRectF PlotDataQwt::maximumBoundingRect(double min_X, double max_X)
     return rect;
 }
 
-QColor PlotDataQwt::randomColorHint() const
+QColor PlotSeries::getColorHint() const
 {   
      return _plot_data->getColorHint() ;
 }
 
-void PlotDataQwt::setColorHint(QColor color)
+void PlotSeries::setColorHint(QColor color)
 {
      _plot_data->setColorHint(color) ;
 }
 
-void PlotDataQwt::setSubsampleFactor()
+void PlotSeries::setSubsampleFactor()
 {
   //  _subsample = (_plot_data->size() / 2000) + 1;
 }
 
-void PlotDataQwt::updateData(bool force_transform)
+void PlotSeries::updateData(bool force_transform)
 {
   bool updated = _plot_data->flushAsyncBuffer();
 
@@ -127,7 +127,7 @@ void PlotDataQwt::updateData(bool force_transform)
   }
 }
 
-PlotData::RangeTime PlotDataQwt::getRangeX()
+PlotData::RangeTime PlotSeries::getRangeX()
 {
   // std::lock_guard<std::mutex> lock(_mutex);
   if( this->size() < 2 )
@@ -139,7 +139,7 @@ PlotData::RangeTime PlotDataQwt::getRangeX()
 
 
 
-PlotData::RangeValue PlotDataQwt::getRangeY(int first_index, int last_index)
+PlotData::RangeValue PlotSeries::getRangeY(int first_index, int last_index)
 {
   if( first_index < 0 || last_index < 0 || first_index > last_index)
   {

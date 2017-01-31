@@ -4,21 +4,21 @@
 #include <map>
 #include <QObject>
 #include <QTextEdit>
-#include <qwt_plot.h>
-#include <qwt_plot_curve.h>
-#include <qwt_plot_grid.h>
-#include <qwt_symbol.h>
-#include <qwt_legend.h>
-#include "plotmagnifier.h"
-#include "plotzoomer.h"
-#include <qwt_plot_panner.h>
 #include <QDomDocument>
-#include "plotdata_qwt.h"
-#include "customtracker.h"
-#include <qwt_plot_legenditem.h>
 #include <deque>
 #include <QMessageBox>
 #include <QTime>
+#include <memory>
+#include "plotseries.h"
+#include "plotcurve.h"
+
+#include <qwt_plot.h>
+
+class CurveTracker;
+class PlotSeries;
+class PlotZoomer;
+class PlotMagnifier;
+
 
 class PlotWidget : public QwtPlot
 {
@@ -32,7 +32,7 @@ public:
 
     bool isEmpty() const;
 
-    const std::map<QString, std::shared_ptr<QwtPlotCurve> > &curveList() const;
+    const std::map<QString, std::shared_ptr<PlotCurve> > &curveList() const;
 
     QDomElement xmlSaveState(QDomDocument &doc) const;
 
@@ -44,20 +44,21 @@ public:
 
     std::pair<double,double> maximumRangeY(bool current_canvas = false) const;
 
-    CurveTracker* tracker();
+    const CurveTracker *tracker() const;
+    CurveTracker *tracker();
 
     void setScale( QRectF rect, bool emit_signal = true );
 
 
 protected:
-    virtual void dragEnterEvent(QDragEnterEvent *event) ;
-    virtual void dragMoveEvent(QDragMoveEvent *event) ;
-    virtual void dropEvent(QDropEvent *event) ;
+    virtual void dragEnterEvent(QDragEnterEvent *event) override;
+    virtual void dragMoveEvent(QDragMoveEvent *event) override ;
+    virtual void dropEvent(QDropEvent *event)override ;
 
-    virtual void mousePressEvent(QMouseEvent *event) ;
-    virtual void mouseReleaseEvent(QMouseEvent *event);
+    virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseReleaseEvent(QMouseEvent *event) override;
 
-    virtual bool eventFilter(QObject *obj, QEvent *event);
+    virtual bool eventFilter(QObject *obj, QEvent *event) override;
 
 signals:
     void swapWidgetsRequested(PlotWidget* source, PlotWidget* destination);
@@ -96,7 +97,7 @@ private slots:
 
 
 private:
-    std::map<QString, std::shared_ptr<QwtPlotCurve> > _curve_list;
+    std::map<QString, std::shared_ptr<PlotCurve> > _curve_list;
 
     QAction *_action_removeCurve;
     QAction *_action_removeAllCurves;
@@ -108,25 +109,19 @@ private:
     QAction *_action_1stDerivativeTransform;
     QAction *_action_2ndDerivativeTransform;
 
-    PlotZoomer* _zoomer;
-    PlotMagnifier* _magnifier;
-    QwtPlotPanner* _panner;
-    // QRectF _prev_bounding;
-    CurveTracker* _tracker;
-    QwtPlotLegendItem* _legend;
-    QwtPlotGrid* _grid;
-
     void setAxisScale( int axisId, double min, double max, double step = 0 );
 
     PlotDataMap* _mapped_data;
-    PlotDataQwt::Transform _current_transform;
+    PlotSeries::Transform _current_transform;
 
     void buildActions();
-    void buildLegend();
 
     int   _fps_counter;
     QTime _fps_timeStamp;
-    bool _show_line_and_points;
+    PlotCurve::LineStyle _line_style;
+
+    struct Pimpl;
+    std::unique_ptr<Pimpl> p;
 
 };
 

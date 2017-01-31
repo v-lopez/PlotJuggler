@@ -1,5 +1,5 @@
-#ifndef PLOTDATA_QWT_H
-#define PLOTDATA_QWT_H
+#ifndef PLOTSERIES_H
+#define PLOTSERIES_H
 
 #include <QColor>
 #include <qwt_series_data.h>
@@ -7,25 +7,25 @@
 
 
 
-class PlotDataQwt: public QwtSeriesData<QPointF>
+class PlotSeries: public QwtSeriesData<QPointF>
 {
 public:
 
-    PlotDataQwt(PlotDataPtr base);
+    PlotSeries(PlotDataPtr base);
 
-    virtual ~PlotDataQwt() {}
+    virtual ~PlotSeries() {}
 
-    virtual QPointF sample( size_t i ) const override;
+    virtual QPointF sample( size_t i ) const;
 
-    virtual QRectF boundingRect() const override;
+    virtual QRectF boundingRect() const;
 
-    virtual size_t size() const override;
+    virtual size_t size() const;
 
     QRectF maximumBoundingRect(double min_X, double max_X);
 
-    PlotDataPtr data() { return _plot_data; }
+    PlotDataPtr data() const{ return _plot_data; }
 
-    QColor randomColorHint() const;
+    QColor getColorHint() const;
     void setColorHint(QColor color);
 
     void setSubsampleFactor();
@@ -46,13 +46,15 @@ public:
     Transform transform() const { return _transform; }
 
 private:
+
     PlotDataPtr _plot_data;
     std::vector<QPointF> _cached_transformed_curve;
     int      _preferedColor;
     unsigned _subsample;
     Transform _transform;
-
 };
+
+typedef std::shared_ptr<PlotSeries> PlotSeriesPtr;
 
 
 
