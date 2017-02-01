@@ -13,6 +13,8 @@ QT5_WRAP_UI ( UI_SRC
     ../common/selectlistdialog.ui
     )
 
+set(IMPL_DIR impl_qtcharts)
+
 SET( PLOTTER_SRC
     busydialog.cpp
     busytaskdialog.cpp
@@ -30,17 +32,19 @@ SET( PLOTTER_SRC
     plotseries.h
     plotwidget.h
 
-    impl/plotlegend.h
-    impl/plotmagnifier.h
-    impl/plotzoomer.h
+    plotwidget.cpp
 
-    impl/customtracker.cpp
-    impl/plotcurve.cpp
-    impl/plotlegend.cpp
-    impl/plotseries.cpp
-    impl/plotmagnifier.cpp
-    impl/plotwidget.cpp
-    impl/plotzoomer.cpp
+   # ${IMPL_DIR}/plotlegend.h
+   # ${IMPL_DIR}/plotmagnifier.h
+  #  ${IMPL_DIR}/plotzoomer.h
+
+  #  ${IMPL_DIR}/customtracker.cpp
+  #  ${IMPL_DIR}/plotcurve.cpp
+  #  ${IMPL_DIR}/plotlegend.cpp
+  #  ${IMPL_DIR}/plotseries.cpp
+  #  ${IMPL_DIR}/plotmagnifier.cpp
+ #   ${IMPL_DIR}/plotwidget.cpp
+ #   ${IMPL_DIR}/plotzoomer.cpp
 
     ../common/selectlistdialog.h
     ../include/PlotJuggler/plotdata.h
@@ -56,7 +60,7 @@ target_link_libraries(PlotJuggler
     ${Qt5Xml_LIBRARIES}
     ${Qt5Concurrent_LIBRARIES}
     colorwidgets
-    qwt_static
+    qtcharts
     )
 
 if(catkin_FOUND)

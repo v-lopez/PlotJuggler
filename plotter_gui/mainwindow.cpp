@@ -6,7 +6,6 @@
 #include <QMenu>
 #include <QStringListModel>
 #include <stdio.h>
-#include <qwt_plot_canvas.h>
 #include <QDomDocument>
 #include <QFileDialog>
 #include <QMessageBox>

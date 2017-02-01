@@ -1,5 +1,5 @@
-#ifndef DragableWidget_H
-#define DragableWidget_H
+#ifndef PLOT_Widget_H
+#define PLOT_Widget_H
 
 #include <map>
 #include <QObject>
@@ -9,24 +9,34 @@
 #include <QMessageBox>
 #include <QTime>
 #include <memory>
-#include "plotseries.h"
 #include "plotcurve.h"
-
-#include <qwt_plot.h>
+#include "plotseries.h"
 
 class CurveTracker;
-class PlotSeries;
-class PlotZoomer;
+class PlotCurve;
+class PlotGrid;
+class PlotLegend;
 class PlotMagnifier;
 
+#ifndef USE_QTCHARTS
 
-class PlotWidget : public QwtPlot
-{
+#include <qwt_plot_curve.h>
+class PlotWidget : public QwtPlot {
+
+#else
+#include <QtCharts/QChartView>
+class PlotWidget : public QtCharts::QChartView {
+#endif
     Q_OBJECT
 
 public:
     PlotWidget(PlotDataMap* datamap, QWidget *parent=0);
     virtual ~PlotWidget();
+
+    typedef enum{
+        AXIS_X,
+        AXIS_Y
+    } Axis;
 
     bool addCurve(const QString&  name, bool do_replot = true);
 
@@ -49,16 +59,23 @@ public:
 
     void setScale( QRectF rect, bool emit_signal = true );
 
+    void setTitle(QString text);
+
+    QPointF canvasToPlot(QPoint  pos);
+    QPoint  plotToCanvas(QPointF pos);
 
 protected:
     virtual void dragEnterEvent(QDragEnterEvent *event) override;
-    virtual void dragMoveEvent(QDragMoveEvent *event) override ;
     virtual void dropEvent(QDropEvent *event)override ;
-
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
-
     virtual bool eventFilter(QObject *obj, QEvent *event) override;
+
+    void dragEnterEvent_BaseImpl(QDragEnterEvent *event);
+    void dropEvent_BaseImpl(QDropEvent *event) ;
+    void mousePressEvent_BaseImpl(QMouseEvent *event);
+    void mouseReleaseEvent_BaseImpl(QMouseEvent *event);
+    bool eventFilter_BaseImpl(QObject *obj, QEvent *event);
 
 signals:
     void swapWidgetsRequested(PlotWidget* source, PlotWidget* destination);
@@ -95,7 +112,6 @@ private slots:
     void on_showPoints_triggered(bool checked);
     void on_externallyResized(const QRectF &new_rect);
 
-
 private:
     std::map<QString, std::shared_ptr<PlotCurve> > _curve_list;
 
@@ -109,7 +125,7 @@ private:
     QAction *_action_1stDerivativeTransform;
     QAction *_action_2ndDerivativeTransform;
 
-    void setAxisScale( int axisId, double min, double max, double step = 0 );
+    void setAxisScale(Axis axisId, double min, double max, double step = 0 );
 
     PlotDataMap* _mapped_data;
     PlotSeries::Transform _current_transform;
@@ -120,9 +136,10 @@ private:
     QTime _fps_timeStamp;
     PlotCurve::LineStyle _line_style;
 
-    struct Pimpl;
-    std::unique_ptr<Pimpl> p;
-
+    CurveTracker*  _tracker;
+    PlotLegend*    _legend;
+    PlotGrid*      _grid;
+    PlotMagnifier* _magnifier;
 };
 
 #endif

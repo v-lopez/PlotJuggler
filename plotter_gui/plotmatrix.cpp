@@ -1,9 +1,5 @@
 #include <qlayout.h>
 #include <qpen.h>
-#include <qwt_plot.h>
-#include <qwt_plot_canvas.h>
-#include <qwt_scale_widget.h>
-#include <qwt_scale_draw.h>
 #include "plotmatrix.h"
 #include "customtracker.h"
 
@@ -224,17 +220,6 @@ const PlotWidget* PlotMatrix::plotAt( unsigned index ) const
 }
 
 
-void PlotMatrix::setAxisScale(QwtPlot::Axis axisId, unsigned row, unsigned col,
-                               double min, double max, double step )
-{
-    QwtPlot *plt = plotAt( row, col );
-    if ( plt )
-    {
-        plt->setAxisScale( axisId, min, max, step );
-        plt->updateAxes();
-    }
-}
-
 QDomElement PlotMatrix::xmlSaveState( QDomDocument &doc ) const
 {
     QDomElement element = doc.createElement("plotmatrix");
@@ -304,14 +289,14 @@ void PlotMatrix::updateLayout()
 {
     for ( unsigned row = 0; row < rowsCount(); row++ )
     {
-        alignAxes( row, QwtPlot::xBottom );
-        alignScaleBorder( row, QwtPlot::yLeft );
+        alignAxes( row, PlotWidget::AXIS_X );
+        alignScaleBorder( row, PlotWidget::AXIS_Y );
     }
 
     for ( unsigned col = 0; col < colsCount(); col++ )
     {
-        alignAxes( col, QwtPlot::yLeft );
-        alignScaleBorder( col, QwtPlot::xBottom );
+        alignAxes( col, PlotWidget::AXIS_Y );
+        alignScaleBorder( col, PlotWidget::AXIS_X );
     }
 }
 
@@ -406,9 +391,9 @@ void PlotMatrix::on_singlePlotScaleChanged(PlotWidget *modified_plot, QRectF new
     emit undoableChange();
 }
 
-void PlotMatrix::alignAxes( unsigned rowOrColumn, QwtPlot::Axis axisId )
+void PlotMatrix::alignAxes( unsigned rowOrColumn, PlotWidget::Axis axisId )
 {
-    if ( axisId == QwtPlot::yLeft || axisId == QwtPlot::yRight )
+ /*   if ( axisId == PlotWidget::AXIS_Y )
     {
         double maxExtent = 0;
 
@@ -466,12 +451,12 @@ void PlotMatrix::alignAxes( unsigned rowOrColumn, QwtPlot::Axis axisId )
                 scaleWidget->scaleDraw()->setMinimumExtent( maxExtent );
             }
         }
-    }
+    }*/
 }
 
-void PlotMatrix::alignScaleBorder(unsigned rowOrColumn, QwtPlot::Axis axisId )
+void PlotMatrix::alignScaleBorder(unsigned rowOrColumn, PlotWidget::Axis axisId )
 {
-    if ( axisId == QwtPlot::yLeft || axisId == QwtPlot::yRight )
+  /*  if ( axisId == PlotWidget::AXIS_Y )
     {
         for ( unsigned col = 0; col < colsCount(); col++ )
         {
@@ -480,7 +465,7 @@ void PlotMatrix::alignScaleBorder(unsigned rowOrColumn, QwtPlot::Axis axisId )
                 p->axisWidget( axisId )->setMinBorderDist( 10, 10 );
         }
     }
-    else if ( axisId == QwtPlot::xTop || axisId == QwtPlot::xBottom )
+    else if ( PlotWidget::AXIS_X )
     {
         for ( unsigned row = 0; row < rowsCount(); row++ )
         {
@@ -488,5 +473,5 @@ void PlotMatrix::alignScaleBorder(unsigned rowOrColumn, QwtPlot::Axis axisId )
             if ( p )
                 p->axisWidget( axisId )->setMinBorderDist( 15, 15 );
         }
-    }
+    }*/
 }

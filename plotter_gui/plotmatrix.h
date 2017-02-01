@@ -33,9 +33,6 @@ public:
     PlotWidget* plotAt( unsigned index );
     const PlotWidget* plotAt( unsigned index ) const;
 
-    void setAxisScale(QwtPlot::Axis axisId, unsigned row, unsigned col,
-                      double min, double max, double step = 0 );
-
     QDomElement xmlSaveState(QDomDocument &doc) const;
 
     bool xmlLoadState(QDomElement &plotmatrix_element );
@@ -65,8 +62,8 @@ private slots:
     void on_singlePlotScaleChanged(PlotWidget* modified_plot, QRectF range);
 
 private:
-    void alignAxes(unsigned rowOrColumn, QwtPlot::Axis axisId );
-    void alignScaleBorder( unsigned rowOrColumn, QwtPlot::Axis axisId );
+    void alignAxes(unsigned rowOrColumn, PlotWidget::Axis axisId );
+    void alignScaleBorder( unsigned rowOrColumn, PlotWidget::Axis axisId );
     PlotWidget *addPlotWidget( unsigned row, unsigned col);
     void swapPlots( unsigned rowA, unsigned colA, unsigned rowB, unsigned colB);
 

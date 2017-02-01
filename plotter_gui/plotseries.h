@@ -2,13 +2,17 @@
 #define PLOTSERIES_H
 
 #include <QColor>
-#include <qwt_series_data.h>
 #include "PlotJuggler/plotdata.h"
 
-
-
+#ifndef USE_QTCHARTS
+#include <qwt_series_data.h>
 class PlotSeries: public QwtSeriesData<QPointF>
 {
+#else
+#include <QtCharts/QLineSeries>
+class PlotSeries: public QtCharts::QLineSeries
+{
+#endif
 public:
 
     PlotSeries(PlotDataPtr base);
