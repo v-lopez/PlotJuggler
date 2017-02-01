@@ -10,7 +10,7 @@
 //class PlotMagnifier : public QwtPlotMagnifier
 { 
 #else
-class PlotMagnifier
+class PlotMagnifier: QObject
 {
 #endif
     Q_OBJECT

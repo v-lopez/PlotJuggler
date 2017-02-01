@@ -154,8 +154,8 @@ void MainWindow::getMaximumRangeX(double* minX, double* maxX)
     {
         auto rangeX = plots[i]->maximumRangeX();
 
-        if( *minX > rangeX.first )    *minX = rangeX.first ;
-        if( *maxX < rangeX.second )   *maxX = rangeX.second;
+        if( *minX > rangeX->min )   *minX = rangeX->min;
+        if( *maxX < rangeX->max )   *maxX = rangeX->max;
     }
 }
 

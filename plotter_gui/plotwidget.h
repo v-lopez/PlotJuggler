@@ -18,7 +18,7 @@ class PlotGrid;
 class PlotLegend;
 class PlotMagnifier;
 
-#ifndef USE_QTCHARTS
+#ifdef USE_QWT
 
 #include <qwt_plot_curve.h>
 class PlotWidget : public QwtPlot {
@@ -50,9 +50,9 @@ public:
 
     QRectF currentBoundingRect() const;
 
-    std::pair<double,double> maximumRangeX() const;
+    PlotData::RangeTime maximumRangeX() const;
 
-    std::pair<double,double> maximumRangeY(bool current_canvas = false) const;
+    PlotData::RangeValue maximumRangeY() const;
 
     const CurveTracker *tracker() const;
     CurveTracker *tracker();

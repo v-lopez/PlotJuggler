@@ -36,7 +36,7 @@ public:
 
     void updateData(bool force_transform);
 
-    PlotData::RangeTime getRangeX();
+    PlotData::RangeTime  getRangeX();
 
     PlotData::RangeValue getRangeY(int first_index, int last_index );
 

@@ -34,8 +34,9 @@ SET( PLOTTER_SRC
 
     plotwidget.cpp
 
-   # ${IMPL_DIR}/plotlegend.h
-   # ${IMPL_DIR}/plotmagnifier.h
+    plotlegend.h
+    plotmagnifier.h
+
   #  ${IMPL_DIR}/plotzoomer.h
 
   #  ${IMPL_DIR}/customtracker.cpp

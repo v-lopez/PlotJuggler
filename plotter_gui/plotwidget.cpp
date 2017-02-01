@@ -110,11 +110,11 @@ bool PlotWidget::addCurve(const QString &name, bool do_replot)
     curve->attach( this );
     _curve_list.insert( std::make_pair(name, curve));
 
-    auto rangeX = maximumRangeX();
-    auto rangeY = maximumRangeY();
+    auto range_X = maximumRangeX();
+    auto range_Y = maximumRangeY();
 
-    this->setAxisScale( AXIS_X, rangeX.first, rangeX.second );
-    this->setAxisScale( AXIS_Y, rangeY.first, rangeY.second );
+    this->setAxisScale( AXIS_X, range_X->min, range_X->max );
+    this->setAxisScale( AXIS_Y, range_Y->min, range_Y->max );
 
     if( do_replot ) {
         replot();
@@ -388,13 +388,13 @@ void PlotWidget::activateGrid(bool activate)
     _grid->setVisible(activate);
 }
 
-std::pair<double,double> PlotWidget::maximumRangeX() const
+PlotData::RangeTime PlotWidget::maximumRangeX() const
 {
     double left   = 0;
     double right  = 0;
 
     if( _curve_list.size() == 0){
-        return std::make_pair( double(0), double(0) );
+        return PlotData::RangeTime();
     }
 
     bool first = true;
@@ -424,11 +424,11 @@ std::pair<double,double> PlotWidget::maximumRangeX() const
     }
 
     _magnifier->setAxisLimits( AXIS_X, left, right);
-    return std::make_pair( left, right);
+    return PlotData::RangeTime( { left, right } );
 }
 
 //TODO report failure for empty dataset
-std::pair<double,double>  PlotWidget::maximumRangeY(bool current_canvas) const
+PlotData::RangeValue PlotWidget::maximumRangeY() const
 {
     double top    = 0;
     double bottom = 0;
@@ -439,23 +439,13 @@ std::pair<double,double>  PlotWidget::maximumRangeY(bool current_canvas) const
         PlotSeries& plot = ( it->second->series() );
         plot.updateData(false);
 
-        double min_X, max_X;
-        if( current_canvas )
-        {
-            min_X = this->canvasMap( QwtPlot::xBottom ).s1();
-            max_X = this->canvasMap( QwtPlot::xBottom ).s2();
-        }
-        else{
-            auto range_X = maximumRangeX();
-            min_X = range_X.first;
-            max_X = range_X.second;
-        }
+        auto max_range_X = maximumRangeX();
+        auto range_X = plot.getRangeX();
 
-        const auto range_X = plot.getRangeX();
         if( !range_X ) continue;
 
-        int X0 = plot.data()->getIndexFromX(std::max(range_X->min, min_X));
-        int X1 = plot.data()->getIndexFromX(std::min(range_X->max, max_X));
+        int X0 = plot.data()->getIndexFromX(std::max(range_X->min, max_range_X->min));
+        int X1 = plot.data()->getIndexFromX(std::min(range_X->max, max_range_X->max));
 
         if( X0<0 || X1 <0)
         {
@@ -495,7 +485,7 @@ std::pair<double,double>  PlotWidget::maximumRangeY(bool current_canvas) const
     }
 
     _magnifier->setAxisLimits( AXIS_Y, bottom, top);
-    return std::make_pair( bottom,  top);
+    return PlotData::RangeValue( { bottom,  top} );
 }
 
 
@@ -571,13 +561,13 @@ void PlotWidget::zoomOut(bool emit_signal)
     QRectF rect = currentBoundingRect();
     auto rangeX = maximumRangeX();
 
-    rect.setLeft( rangeX.first );
-    rect.setRight( rangeX.second );
+    rect.setLeft(  rangeX->min );
+    rect.setRight( rangeX->max );
 
-    auto rangeY = maximumRangeY( false );
+    auto rangeY = maximumRangeY();
 
-    rect.setBottom( rangeY.first );
-    rect.setTop( rangeY.second );
+    rect.setBottom( rangeY->min );
+    rect.setTop( rangeY->max );
     this->setScale(rect);
 }
 
@@ -586,18 +576,18 @@ void PlotWidget::on_zoomOutHorizontal_triggered(bool emit_signal)
     QRectF act = currentBoundingRect();
     auto rangeX = maximumRangeX();
 
-    act.setLeft( rangeX.first );
-    act.setRight( rangeX.second );
+    act.setLeft( rangeX->min );
+    act.setRight( rangeX->max );
     this->setScale(act, emit_signal);
 }
 
 void PlotWidget::on_zoomOutVertical_triggered(bool emit_signal)
 {
     QRectF act = currentBoundingRect();
-    auto rangeY = maximumRangeY( true );
+    auto rangeY = maximumRangeY();
 
-    act.setBottom( rangeY.first );
-    act.setTop( rangeY.second );
+    act.setBottom( rangeY->min );
+    act.setTop(    rangeY->max );
     this->setScale(act, emit_signal);
 }
 
@@ -677,7 +667,7 @@ void PlotWidget::canvasContextMenuTriggered(const QPoint &pos)
     _action_removeAllCurves->setEnabled( ! _curve_list.empty() );
     _action_changeColors->setEnabled(  ! _curve_list.empty() );
 
-  //  menu.exec( canvas()->mapToGlobal(pos) );
+    //  menu.exec( canvas()->mapToGlobal(pos) );
     menu.exec( pos );
 }
 
