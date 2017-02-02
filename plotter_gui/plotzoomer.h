@@ -2,10 +2,15 @@
 #define PLOTZOOMER_H
 
 #include <QObject>
-#include <qwt_plot_zoomer.h>
 
+#ifdef USE_QWT
+#include <qwt_plot_zoomer.h>
 class PlotZoomer : public QwtPlotZoomer
 {
+#else
+
+#endif
+
 public:
     PlotZoomer();
 

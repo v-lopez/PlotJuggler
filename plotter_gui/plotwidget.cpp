@@ -110,6 +110,12 @@ bool PlotWidget::addCurve(const QString &name, bool do_replot)
     curve->attach( this );
     _curve_list.insert( std::make_pair(name, curve));
 
+	if( _current_transform != PlotSeries::noTransform)
+	{
+		curve->series().setTransform( _current_transform );
+		curve->series().updateData(true);
+	}
+
     auto range_X = maximumRangeX();
     auto range_Y = maximumRangeY();
 
@@ -146,7 +152,7 @@ const std::map<QString, std::shared_ptr<PlotCurve> > &PlotWidget::curveList() co
 
 void PlotWidget::dragEnterEvent(QDragEnterEvent *event)
 {
-    dragEnterEvent_BaseImpl(event);
+	BaseClass::dragEnterEvent(event);
 
     const QMimeData *mimeData = event->mimeData();
     QStringList mimeFormats = mimeData->formats();
@@ -174,7 +180,7 @@ void PlotWidget::dragEnterEvent(QDragEnterEvent *event)
 
 void PlotWidget::dropEvent(QDropEvent *event)
 {
-    dropEvent_BaseImpl(event);
+	BaseClass::dropEvent(event);
 
     const QMimeData *mimeData = event->mimeData();
     QStringList mimeFormats = mimeData->formats();
@@ -375,7 +381,7 @@ void PlotWidget::setScale(QRectF rect, bool emit_signal)
 
     if( emit_signal) {
         emit rectChanged(this, rect);
-    }
+	}
 }
 
 void PlotWidget::activateLegent(bool activate)
@@ -611,7 +617,7 @@ void PlotWidget::on_noTransform_triggered(bool checked )
 
 void PlotWidget::on_1stDerivativeTransform_triggered(bool checked)
 {
-    if(_current_transform ==  PlotSeries::firstDerivative) return;
+	if(_current_transform == PlotSeries::firstDerivative) return;
 
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
@@ -667,8 +673,7 @@ void PlotWidget::canvasContextMenuTriggered(const QPoint &pos)
     _action_removeAllCurves->setEnabled( ! _curve_list.empty() );
     _action_changeColors->setEnabled(  ! _curve_list.empty() );
 
-    //  menu.exec( canvas()->mapToGlobal(pos) );
-    menu.exec( pos );
+	menu.exec( canvas()->mapToGlobal(pos) );
 }
 
 void PlotWidget::mousePressEvent(QMouseEvent *event)
@@ -700,13 +705,13 @@ void PlotWidget::mousePressEvent(QMouseEvent *event)
         QApplication::setOverrideCursor(QCursor(QPixmap(":/icons/resources/move.png")));
     }
 
-    mousePressEvent_BaseImpl(event);
+	BaseClass::mousePressEvent(event);
 }
 
 void PlotWidget::mouseReleaseEvent(QMouseEvent *event )
 {
     QApplication::restoreOverrideCursor();
-    mouseReleaseEvent_BaseImpl(event);
+	BaseClass::mouseReleaseEvent(event);
 }
 
 
@@ -748,6 +753,6 @@ bool PlotWidget::eventFilter(QObject *obj, QEvent *event)
             emit trackerMoved(pointF);
         }
     }
-    return eventFilter_BaseImpl( obj, event );
+	return BaseClass::eventFilter( obj, event );
 }
 

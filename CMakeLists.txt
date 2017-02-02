@@ -34,7 +34,7 @@ set(CMAKE_INCLUDE_DIRECTORIES_BEFORE ON)
 set(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -DUSE_QTCHARTS ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 
 
 include_directories(
@@ -47,7 +47,7 @@ include_directories(
 
 
 include_directories(
-    #./qwt/src
+    ./qwt/src
     ./include ./color_widgets/include )
 
 
@@ -64,7 +64,7 @@ endif()
 
 
 add_subdirectory( color_widgets )
-#add_subdirectory( qwt/src )
+add_subdirectory( qwt/src )
 add_subdirectory( qtcharts )
 add_subdirectory( plotter_gui )
 

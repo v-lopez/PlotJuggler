@@ -1,4 +1,4 @@
-#include "plotzoomer.h"
+#include "../plotzoomer.h"
 #include <QMouseEvent>
 
 

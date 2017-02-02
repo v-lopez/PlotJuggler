@@ -17,17 +17,25 @@ class PlotCurve;
 class PlotGrid;
 class PlotLegend;
 class PlotMagnifier;
+class PlotZoomer;
 
 #ifdef USE_QWT
 
 #include <qwt_plot_curve.h>
-class PlotWidget : public QwtPlot {
+#include <qwt_plot.h>
 
+class PlotWidget : public QwtPlot
+{
+	typedef QwtPlot BaseClass;
 #else
+
 #include <QtCharts/QChartView>
-class PlotWidget : public QtCharts::QChartView {
+class PlotWidget : public QtCharts::QChartView
+{
+	typedef QtCharts::QChartView BaseClass;
 #endif
-    Q_OBJECT
+
+	Q_OBJECT
 
 public:
     PlotWidget(PlotDataMap* datamap, QWidget *parent=0);
@@ -70,12 +78,6 @@ protected:
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual bool eventFilter(QObject *obj, QEvent *event) override;
-
-    void dragEnterEvent_BaseImpl(QDragEnterEvent *event);
-    void dropEvent_BaseImpl(QDropEvent *event) ;
-    void mousePressEvent_BaseImpl(QMouseEvent *event);
-    void mouseReleaseEvent_BaseImpl(QMouseEvent *event);
-    bool eventFilter_BaseImpl(QObject *obj, QEvent *event);
 
 signals:
     void swapWidgetsRequested(PlotWidget* source, PlotWidget* destination);
@@ -140,6 +142,7 @@ private:
     PlotLegend*    _legend;
     PlotGrid*      _grid;
     PlotMagnifier* _magnifier;
+	PlotZoomer*    _zoomer;
 };
 
 #endif

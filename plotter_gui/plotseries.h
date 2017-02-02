@@ -4,7 +4,7 @@
 #include <QColor>
 #include "PlotJuggler/plotdata.h"
 
-#ifndef USE_QTCHARTS
+#ifdef USE_QWT
 #include <qwt_series_data.h>
 class PlotSeries: public QwtSeriesData<QPointF>
 {
@@ -43,7 +43,8 @@ public:
     typedef enum{
       noTransform,
       firstDerivative,
-      secondDerivative
+	  secondDerivative,
+	  undefined
     } Transform;
 
     void setTransform(Transform trans) { _transform = trans; }
