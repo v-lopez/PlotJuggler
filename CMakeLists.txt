@@ -64,7 +64,7 @@ endif()
 
 
 add_subdirectory( color_widgets )
-add_subdirectory( qwt/src )
+#add_subdirectory( qwt/src )
 add_subdirectory( qtcharts )
 add_subdirectory( plotter_gui )
 

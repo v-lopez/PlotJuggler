@@ -1,8 +1,17 @@
 
 include_directories( ./ ../  ../include  ../common)
 
-SET(CMAKE_AUTOMOC_MOC_OPTIONS "-DUSE_QWT")
-add_definitions( -DUSE_QWT )
+#set(QWT true)
+
+if( QWT )
+    SET(CMAKE_AUTOMOC_MOC_OPTIONS "-DUSE_QWT")
+    add_definitions( -DUSE_QWT )
+    set(IMPL_DIR impl_qwt)
+else()
+    SET(CMAKE_AUTOMOC_MOC_OPTIONS "-DUSE_QTCHARTS" )
+    add_definitions( -DUSE_QTCHARTS )
+    set(IMPL_DIR impl_qtcharts)
+endif()
 
 QT5_ADD_RESOURCES (RES_SRC  resource.qrc)
 
@@ -15,8 +24,6 @@ QT5_WRAP_UI ( UI_SRC
     tabbedplotwidget.ui
     ../common/selectlistdialog.ui
     )
-
-set(IMPL_DIR impl_qwt)
 
 SET( PLOTTER_SRC
     busydialog.cpp
@@ -63,7 +70,7 @@ target_link_libraries(PlotJuggler
     ${Qt5Concurrent_LIBRARIES}
     colorwidgets
     qtcharts
-    qwt_static
+   # qwt_static
     )
 
 if(catkin_FOUND)

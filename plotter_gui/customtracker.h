@@ -17,7 +17,7 @@ public:
     explicit CurveTracker(PlotWidget *parent );
     virtual ~CurveTracker();
 
-    QPointF actualPosition() const;
+	QPointF actualPosition() const;
 
 public slots:
 
@@ -26,7 +26,7 @@ public slots:
     void setPosition(const QPointF & );
 
 private:
-    QLineF curveLineAt(const PlotCurve *, double x ) const;
+	QLineF curveLineAt(const PlotCurve *, double x ) const;
 
     QPointF _prev_trackerpoint;
     bool _visible;
@@ -34,5 +34,22 @@ private:
     struct Pimpl;
     std::unique_ptr<Pimpl> p;
 };
+
+inline QPointF CurveTracker::actualPosition() const {
+	return _prev_trackerpoint;
+}
+
+inline QLineF CurveTracker::curveLineAt(const PlotCurve *curve, double x) const
+{
+	QLineF line;
+	if ( curve->series().size() >= 2 ){
+		size_t index = curve->series().data()->getIndexFromX(x);
+		if ( index > 0 ){
+			line.setP1( curve->series().sample( index - 1 ) );
+			line.setP2( curve->series().sample( index ) );
+		}
+	}
+	return line;
+}
 
 #endif // CUSTOMTRACKER_H

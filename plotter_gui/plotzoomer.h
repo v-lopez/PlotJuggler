@@ -2,6 +2,7 @@
 #define PLOTZOOMER_H
 
 #include <QObject>
+#include <QMouseEvent>
 
 #ifdef USE_QWT
 #include <qwt_plot_zoomer.h>
@@ -9,6 +10,8 @@ class PlotZoomer : public QwtPlotZoomer
 {
 #else
 
+class PlotZoomer
+{
 #endif
 
 public:
@@ -18,7 +21,7 @@ public:
 
     virtual ~PlotZoomer() = default;
 protected:
-     virtual void widgetMouseReleaseEvent( QMouseEvent * ) override;
+	 virtual void widgetMouseReleaseEvent( QMouseEvent * );
 };
 
 #endif // PLOTZOOMER_H

@@ -673,7 +673,7 @@ void PlotWidget::canvasContextMenuTriggered(const QPoint &pos)
     _action_removeAllCurves->setEnabled( ! _curve_list.empty() );
     _action_changeColors->setEnabled(  ! _curve_list.empty() );
 
-	menu.exec( canvas()->mapToGlobal(pos) );
+	menu.exec( this->mapToGlobal(pos) );
 }
 
 void PlotWidget::mousePressEvent(QMouseEvent *event)
