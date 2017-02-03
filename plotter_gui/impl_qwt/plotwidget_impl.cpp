@@ -18,7 +18,7 @@ PlotWidget::PlotWidget(PlotDataMap *datamap, QWidget *parent):
 	_grid( 0 ),
 	_mapped_data( datamap ),
 	_line_style( PlotCurve::LINES),
-	_current_transform( PlotSeries::noTransform )
+	_current_transform( PlotCurve::noTransform )
 {
 	this->setAcceptDrops( true );
 	this->setMinimumWidth( 100 );
@@ -101,15 +101,12 @@ QPoint PlotWidget::plotToCanvas(QPointF point)
 
 void PlotWidget::replot()
 {
-	//if( _zoomer) _zoomer->setZoomBase( false );
-
-//	qDebug() << "------\n" << _zoomer->zoomBase();
-//	qDebug() << _zoomer->zoomRect();
+	if( _zoomer) _zoomer->setZoomBase( false );
 
 	for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
 	{
-		PlotSeries& plot = static_cast<PlotSeries&>( it->second->series() );
-		plot.updateData(false);
+		PlotCurve* series = static_cast<PlotCurve*>( it->second.get());
+		series->updateData(false);
 	}
 	QwtPlot::replot();
 }
@@ -130,8 +127,8 @@ void PlotWidget::setAxisScale(Axis axisId, double min, double max, double step)
 	{
 		for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
 		{
-			PlotSeries& plot = static_cast<PlotSeries&>( it->second->series() );
-			plot.setSubsampleFactor( );
+			PlotCurve* series = static_cast<PlotCurve*>( it->second.get());
+			series->setSubsampleFactor( );
 		}
 		QwtPlot::setAxisScale( QwtPlot::xBottom, min, max, step);
 	}

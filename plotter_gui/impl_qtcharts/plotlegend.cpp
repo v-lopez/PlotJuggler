@@ -1,19 +1,19 @@
 #include "plotlegend.h"
 #include "plotwidget.h"
-/*
-#include <qwt_plot.h>
-#include <qwt_plot_legenditem.h>
-#include <qwt_legend.h>
+
+//#include <qwt_plot.h>
+//#include <qwt_plot_legenditem.h>
+//#include <qwt_legend.h>
 
 struct PlotLegend::Pimpl{
-    QwtPlotLegendItem* legend;
-    QwtPlot* parent;
+  //  QwtPlotLegendItem* legend;
+ //   QwtPlot* parent;
 };
 
 PlotLegend::PlotLegend(PlotWidget *parent) :
     p( new PlotLegend::Pimpl )
 {
-    p->legend = new QwtPlotLegendItem();
+ /*   p->legend = new QwtPlotLegendItem();
     p->parent = static_cast<QwtPlot*>(parent);
     p->legend->attach( p->parent );
 
@@ -37,16 +37,16 @@ PlotLegend::PlotLegend(PlotWidget *parent) :
     QFont font = p->legend->font();
     font.setPointSize( 8 );
     p->legend->setFont( font );
-    p->legend->setVisible( true );
+	p->legend->setVisible( true );*/
 }
 
 void PlotLegend::setVisible(bool visible)
 {
-    if( visible ) p->legend->attach(p->parent);
-    else          p->legend->detach();
+  //  if( visible ) p->legend->attach(p->parent);
+   // else          p->legend->detach();
 }
 
 PlotLegend::~PlotLegend()
 {
 
-}*/
+}

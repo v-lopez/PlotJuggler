@@ -2,9 +2,9 @@
 #include <QDebug>
 #include <limits>
 #include <QWheelEvent>
-/*
-#include <qwt_plot.h>
-PlotMagnifier::PlotMagnifier( QWidget *canvas) : QwtPlotMagnifier(canvas)
+
+//#include <qwt_plot.h>
+PlotMagnifier::PlotMagnifier( QWidget *canvas) //: QwtPlotMagnifier(canvas)
 {
 	_bound.setLeft( std::numeric_limits<double>::min());
 	_bound.setRight( std::numeric_limits<double>::max() );
@@ -18,7 +18,7 @@ PlotMagnifier::~PlotMagnifier() {}
 
 void PlotMagnifier::setAxisLimits(PlotWidget::Axis axis, double lower, double upper)
 {
-	if( axis == PlotWidget::AXIS_X)
+/*	if( axis == PlotWidget::AXIS_X)
 	{
 		_bound.setLeft( lower);
 		_bound.setRight( upper );
@@ -26,12 +26,12 @@ void PlotMagnifier::setAxisLimits(PlotWidget::Axis axis, double lower, double up
 	else{
 		_bound.setBottom( lower);
 		_bound.setTop( upper );
-	}
+	}*/
 }
 
 void PlotMagnifier::rescale( double factor )
 {
-	factor = qAbs( factor );
+/*	factor = qAbs( factor );
 
 	QwtPlot* plt = plot();
 	if ( plt == NULL || factor == 1.0 ){
@@ -107,19 +107,19 @@ void PlotMagnifier::rescale( double factor )
 
 	if ( doReplot ){
 		emit rescaled( new_rect );
-	}
+	}*/
 }
 
 QPointF PlotMagnifier::invTransform(QPoint pos)
 {
-	QwtScaleMap xMap = plot()->canvasMap( QwtPlot::xBottom );
-	QwtScaleMap yMap = plot()->canvasMap( QwtPlot::yLeft );
-	return QPointF ( xMap.invTransform( pos.x() ), yMap.invTransform( pos.y() ) );
+//	QwtScaleMap xMap = plot()->canvasMap( QwtPlot::xBottom );
+//	QwtScaleMap yMap = plot()->canvasMap( QwtPlot::yLeft );
+//	return QPointF ( xMap.invTransform( pos.x() ), yMap.invTransform( pos.y() ) );
 }
 
 void PlotMagnifier::widgetWheelEvent(QWheelEvent *event)
 {
-	_mouse_position = invTransform(event->pos());
-	QwtPlotMagnifier::widgetWheelEvent(event);
+//	_mouse_position = invTransform(event->pos());
+//	QwtPlotMagnifier::widgetWheelEvent(event);
 }
-*/
+

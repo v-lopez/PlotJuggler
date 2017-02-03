@@ -102,23 +102,19 @@ bool PlotWidget::addCurve(const QString &name, bool do_replot)
 
     PlotDataPtr data = it->second;
 
-    auto curve = std::make_shared<PlotCurve>( name, data );
+	auto curve = std::make_shared<PlotCurve>(name, data, this );
+	curve->setStyle( _line_style);
 
-    curve->setStyle( _line_style);
+	curve->setColor( data->getColorHint() );
+	curve->attach( this );
 
-    curve->setColor( data->getColorHint(),  0.7 );
-    curve->attach( this );
-    _curve_list.insert( std::make_pair(name, curve));
+	_curve_list.insert( std::make_pair(name, curve));
 
-	if( _current_transform != PlotSeries::noTransform)
-	{
-		curve->series().setTransform( _current_transform );
-		curve->series().updateData(true);
-	}
+	curve->setTransform( _current_transform );
+	curve->updateData(true);
 
     auto range_X = maximumRangeX();
     auto range_Y = maximumRangeY();
-
     this->setAxisScale( AXIS_X, range_X->min, range_X->max );
     this->setAxisScale( AXIS_Y, range_Y->min, range_Y->max );
 
@@ -133,8 +129,8 @@ void PlotWidget::removeCurve(const QString &name)
     auto it = _curve_list.find(name);
     if( it != _curve_list.end() )
     {
-        auto curve = it->second;
-        curve->detach();
+		auto curve = it->second;
+		curve->detach();
         replot();
         _curve_list.erase( it );
     }
@@ -165,7 +161,7 @@ void PlotWidget::dragEnterEvent(QDragEnterEvent *event)
         {
             event->acceptProposedAction();
         }
-        if( format.contains( "plot_area")  )
+		else if( format.contains( "plot_area")  )
         {
             QString source_name;
             stream >> source_name;
@@ -177,9 +173,10 @@ void PlotWidget::dragEnterEvent(QDragEnterEvent *event)
     }
 }
 
-
 void PlotWidget::dropEvent(QDropEvent *event)
 {
+	qDebug() << "accept drop ";
+
 	BaseClass::dropEvent(event);
 
     const QMimeData *mimeData = event->mimeData();
@@ -255,11 +252,11 @@ QDomElement PlotWidget::xmlSaveState( QDomDocument &doc) const
     }
 
     QDomElement transform  = doc.createElement("transform");
-    if( _current_transform == PlotSeries::firstDerivative )
+	if( _current_transform == PlotCurve::firstDerivative )
     {
         transform.setAttribute("value", "firstDerivative" );
     }
-    else if ( _current_transform == PlotSeries::secondDerivative )
+	else if ( _current_transform == PlotCurve::secondDerivative )
     {
         transform.setAttribute("value", "secondDerivative" );
     }
@@ -290,7 +287,7 @@ bool PlotWidget::xmlLoadState(QDomElement &plot_widget, QMessageBox::StandardBut
         if(  _mapped_data->numeric.find(curve_name.toStdString()) != _mapped_data->numeric.end() )
         {
             addCurve(curve_name, false);
-            _curve_list[curve_name]->setColor( color, 1.0);
+			_curve_list[curve_name]->setColor( color);
             added_curve_names.insert(curve_name );
         }
         else{
@@ -359,7 +356,6 @@ bool PlotWidget::xmlLoadState(QDomElement &plot_widget, QMessageBox::StandardBut
 
         this->setScale( rect, false);
     }
-
     return true;
 }
 
@@ -406,9 +402,8 @@ PlotData::RangeTime PlotWidget::maximumRangeX() const
     bool first = true;
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
-        PlotSeries& plot = ( it->second->series() );
-        plot.updateData(false);
-        auto range_X = plot.getRangeX();
+		PlotCurve* curve = ( it->second.get() );
+		auto range_X = curve->getRangeX();
 
         if( !range_X ) continue;
 
@@ -442,16 +437,15 @@ PlotData::RangeValue PlotWidget::maximumRangeY() const
     bool first = true;
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
-        PlotSeries& plot = ( it->second->series() );
-        plot.updateData(false);
+		PlotCurve* curve = ( it->second.get() );
 
         auto max_range_X = maximumRangeX();
-        auto range_X = plot.getRangeX();
+		auto range_X = curve->getRangeX();
 
         if( !range_X ) continue;
 
-        int X0 = plot.data()->getIndexFromX(std::max(range_X->min, max_range_X->min));
-        int X1 = plot.data()->getIndexFromX(std::min(range_X->max, max_range_X->max));
+		int X0 = curve->data()->getIndexFromX(std::max(range_X->min, max_range_X->min));
+		int X1 = curve->data()->getIndexFromX(std::min(range_X->max, max_range_X->max));
 
         if( X0<0 || X1 <0)
         {
@@ -459,7 +453,7 @@ PlotData::RangeValue PlotWidget::maximumRangeY() const
             continue;
         }
         else{
-            auto range_Y = plot.getRangeY(X0, X1);
+			auto range_Y = curve->getRangeY(X0, X1);
             if( !range_Y )
             {
                 qDebug() << " invalid range_Y in PlotWidget::maximumRangeY";
@@ -520,8 +514,8 @@ void PlotWidget::on_changeColor_triggered()
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
         const QString& curve_name = it->first;
-        auto curve = it->second;
-        color_by_name.insert(std::make_pair( curve_name, curve->color() ));
+		auto curve = it->second;
+		color_by_name.insert(std::make_pair( curve_name, curve->color() ));
     }
 
     CurveColorPick* dialog = new CurveColorPick(&color_by_name, this);
@@ -532,11 +526,11 @@ void PlotWidget::on_changeColor_triggered()
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
         const QString& curve_name = it->first;
-        auto curve = it->second;
+		auto curve = it->second;
         QColor new_color = color_by_name[curve_name];
-        if( curve->color() != new_color)
+		if( curve->color() != new_color)
         {
-            curve->setColor( color_by_name[curve_name], 1.0 );
+			curve->setColor( color_by_name[curve_name] );
             modified = true;
         }
     }
@@ -547,7 +541,7 @@ void PlotWidget::on_changeColor_triggered()
 
 void PlotWidget::on_showPoints_triggered(bool checked)
 {
-    _line_style = checked ? PlotCurve::LINES_AND_DOTS : PlotCurve::LINES ;
+	_line_style = checked ? PlotCurve::LINES_AND_DOTS : PlotCurve::LINES ;
 
     for(auto& it: _curve_list)
     {
@@ -599,16 +593,16 @@ void PlotWidget::on_zoomOutVertical_triggered(bool emit_signal)
 
 void PlotWidget::on_noTransform_triggered(bool checked )
 {
-    if(_current_transform ==  PlotSeries::noTransform) return;
+	if(_current_transform ==  PlotCurve::noTransform) return;
 
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
-        PlotSeries& plot = ( it->second->series() );
-        plot.setTransform( PlotSeries::noTransform );
-        plot.updateData(true);
+		PlotCurve* curve = ( it->second.get() );
+		curve->setTransform( PlotCurve::noTransform );
+		curve->updateData(true);
     }
     this->setTitle("");
-    _current_transform = ( PlotSeries::noTransform );
+	_current_transform = ( PlotCurve::noTransform );
 
     on_zoomOutVertical_triggered(false);
     replot();
@@ -617,18 +611,18 @@ void PlotWidget::on_noTransform_triggered(bool checked )
 
 void PlotWidget::on_1stDerivativeTransform_triggered(bool checked)
 {
-	if(_current_transform == PlotSeries::firstDerivative) return;
+	if(_current_transform == PlotCurve::firstDerivative) return;
 
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
-        PlotSeries& plot = ( it->second->series() );
-        plot.setTransform( PlotSeries::firstDerivative );
-        plot.updateData(true);
+		PlotCurve* curve = ( it->second.get() );
+		curve->setTransform( PlotCurve::firstDerivative );
+		curve->updateData(true);
     }
 
     setTitle("1st derivative");
 
-    _current_transform = ( PlotSeries::firstDerivative );
+	_current_transform = ( PlotCurve::firstDerivative );
 
     on_zoomOutVertical_triggered(false);
     replot();
@@ -637,16 +631,16 @@ void PlotWidget::on_1stDerivativeTransform_triggered(bool checked)
 
 void PlotWidget::on_2ndDerivativeTransform_triggered(bool checked)
 {
-    if(_current_transform ==  PlotSeries::secondDerivative) return;
+	if(_current_transform ==  PlotCurve::secondDerivative) return;
 
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
-        PlotSeries& plot = ( it->second->series() );
-        plot.setTransform( PlotSeries::secondDerivative );
-        plot.updateData(true);
+		PlotCurve* curve = ( it->second.get() );
+		curve->setTransform( PlotCurve::secondDerivative );
+		curve->updateData(true);
     }
     this->setTitle("2nd derivative");
-    _current_transform = ( PlotSeries::secondDerivative );
+	_current_transform = ( PlotCurve::secondDerivative );
 
     on_zoomOutVertical_triggered(false);
     replot();
@@ -718,41 +712,41 @@ void PlotWidget::mouseReleaseEvent(QMouseEvent *event )
 
 bool PlotWidget::eventFilter(QObject *obj, QEvent *event)
 {
-    static bool isPressed = true;
+	static bool isPressed = true;
 
-    if ( event->type() == QEvent::MouseButtonPress)
-    {
-        QMouseEvent *mouse_event = static_cast<QMouseEvent*>(event);
+	if ( event->type() == QEvent::MouseButtonPress)
+	{
+		QMouseEvent *mouse_event = static_cast<QMouseEvent*>(event);
 
-        if( mouse_event->button() == Qt::LeftButton &&
-                (mouse_event->modifiers() & Qt::ShiftModifier) )
-        {
-            isPressed = true;
-            QPointF pointF = canvasToPlot( mouse_event->pos() );
-            emit trackerMoved(pointF);
-        }
-    }
+		if( mouse_event->button() == Qt::LeftButton &&
+		   (mouse_event->modifiers() & Qt::ShiftModifier) )
+		{
+			isPressed = true;
+			QPointF pointF = canvasToPlot( mouse_event->pos() );
+			emit trackerMoved(pointF);
+		}
+	}
 
-    if ( event->type() == QEvent::MouseButtonRelease)
-    {
-        QMouseEvent *mouse_event = static_cast<QMouseEvent*>(event);
+	if ( event->type() == QEvent::MouseButtonRelease)
+	{
+		QMouseEvent *mouse_event = static_cast<QMouseEvent*>(event);
 
-        if( mouse_event->button() == Qt::LeftButton ) {
-            isPressed = false;
-        }
-    }
+		if( mouse_event->button() == Qt::LeftButton ) {
+			isPressed = false;
+		}
+	}
 
-    if ( event->type() == QEvent::MouseMove )
-    {
-        // special processing for mouse move
-        QMouseEvent *mouse_event = static_cast<QMouseEvent*>(event);
+	if ( event->type() == QEvent::MouseMove )
+	{
+		// special processing for mouse move
+		QMouseEvent *mouse_event = static_cast<QMouseEvent*>(event);
 
-        if ( isPressed && mouse_event->modifiers() & Qt::ShiftModifier )
-        {
-            QPointF pointF = canvasToPlot( mouse_event->pos() );
-            emit trackerMoved(pointF);
-        }
-    }
+		if ( isPressed && mouse_event->modifiers() & Qt::ShiftModifier )
+		{
+			QPointF pointF = canvasToPlot( mouse_event->pos() );
+			emit trackerMoved(pointF);
+		}
+	}
 	return BaseClass::eventFilter( obj, event );
 }
 

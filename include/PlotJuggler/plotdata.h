@@ -124,13 +124,13 @@ inline void PlotDataGeneric<Time, Value>::pushBack(Point point)
   _x_points.push_back( point.x );
   _y_points.push_back( point.y );
  // while(_x_points.size() > _capacity) _x_points.pop_front();
- // while(_y_points.size() > _capacity) _y_points.pop_front();
+//  while(_y_points.size() > _capacity) _y_points.pop_front();
 }
 
 template < typename Time, typename Value>
 inline void PlotDataGeneric<Time, Value>::pushBackAsynchronously(Point point)
 {
-  std::lock_guard<std::mutex> lock(_mutex);
+ // std::lock_guard<std::mutex> lock(_mutex);
   while(_pushed_points.size() > ASYNC_BUFFER_CAPACITY) _pushed_points.pop_front();
   _pushed_points.push_back( point );
 }
@@ -138,42 +138,40 @@ inline void PlotDataGeneric<Time, Value>::pushBackAsynchronously(Point point)
 template < typename Time, typename Value>
 inline bool PlotDataGeneric<Time, Value>::flushAsyncBuffer()
 {
-  std::lock_guard<std::mutex> lock(_mutex);
+ // std::lock_guard<std::mutex> lock(_mutex);
 
   if( _pushed_points.empty() ) return false;
 
   while( !_pushed_points.empty() )
   {
-      updateCapacityBasedOnMaxTime();
       const Point& point = _pushed_points.front();
       _x_points.push_back( point.x );
       _y_points.push_back( point.y );
       _pushed_points.pop_front();
   }
+  while( _x_points.size() > 2  &&
+		(_x_points.back() - _x_points.front()) > _max_range_X )
+  {
+	  _x_points.pop_front();
+	  _y_points.pop_front();
+  }
   return true;
 }
-
+/*
 template < typename Time, typename Value>
 inline void PlotDataGeneric<Time, Value>::updateCapacityBasedOnMaxTime()
 {
-  const long sizeX      = _x_points.size();
-/*
-  if( sizeX >= 2 &&
-      _max_range_X != std::numeric_limits<Time>::max())
-  {
-    Time rangeX = _x_points.back() - _x_points.front();
-    while( rangeX > _max_range_X){
+	while( _x_points.size() > 2  &&
+		  (_x_points.back() - _x_points.front()) > _max_range_X )
+	{
         _x_points.pop_front();
         _y_points.pop_front();
-        rangeX = _x_points.back() - _x_points.front();
     }
-  }*/
-}
+}*/
 
 template < typename Time, typename Value>
 inline int PlotDataGeneric<Time, Value>::getIndexFromX(Time x ) const
 {
- // std::lock_guard<std::mutex> lock(_mutex);
   if( _x_points.size() == 0 ){
     return -1;
   }
@@ -191,8 +189,6 @@ inline int PlotDataGeneric<Time, Value>::getIndexFromX(Time x ) const
 template < typename Time, typename Value>
 inline nonstd::optional<Value> PlotDataGeneric<Time, Value>::getYfromX(Time x) const
 {
-  //std::lock_guard<std::mutex> lock(_mutex);
-
   auto lower = std::lower_bound(_x_points.begin(), _x_points.end(), x );
   auto index = std::distance( _x_points.begin(), lower);
 

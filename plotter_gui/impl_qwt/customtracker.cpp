@@ -1,6 +1,7 @@
-#include "customtracker.h"
-#include "plotcurve.h"
-#include "plotwidget.h"
+#include "../customtracker.h"
+#include "../plotcurve.h"
+#include "../plotwidget.h"
+#include "../plotcurve.h"
 
 #include <qwt_series_data.h>
 #include <qwt_plot.h>
@@ -38,11 +39,6 @@ CurveTracker::CurveTracker( PlotWidget *parent ):
 CurveTracker::~CurveTracker()
 {
 
-}
-
-QPointF CurveTracker::actualPosition() const
-{
-    return _prev_trackerpoint;
 }
 
 void CurveTracker::setEnabled(bool enable)
@@ -86,7 +82,7 @@ void CurveTracker::setPosition(const QPointF& position)
     auto it = curves.begin();
     for (int i = 0; i< curves.size(); i++, it++)
     {
-        const std::shared_ptr<PlotCurve>& curve =  it->second;
+		const std::shared_ptr<PlotCurve>& curve =  it->second;
         QColor color;// = curve->color();
 
         text_X_offset =  rect.width() * 0.02;
@@ -152,26 +148,6 @@ void CurveTracker::setPosition(const QPointF& position)
         p->text_marker->setYValue( tot_Y/visible_points );
     }
     p->text_marker->setVisible( visible_points > 0 &&  _visible);
-
     _prev_trackerpoint = position;
-
-}
-
-
-QLineF CurveTracker::curveLineAt(const PlotCurve* curve, double x ) const
-{
-    QLineF line;
-
-    if ( curve->series().size() >= 2 )
-    {
-        int index = curve->series().data()->getIndexFromX(x);
-
-        if ( index > 0 )
-        {
-            line.setP1( curve->series().sample( index - 1 ) );
-            line.setP2( curve->series().sample( index ) );
-        }
-    }
-    return line;
 }
 

@@ -1,18 +1,6 @@
 
 include_directories( ./ ../  ../include  ../common)
 
-#set(QWT true)
-
-if( QWT )
-    SET(CMAKE_AUTOMOC_MOC_OPTIONS "-DUSE_QWT")
-    add_definitions( -DUSE_QWT )
-    set(IMPL_DIR impl_qwt)
-else()
-    SET(CMAKE_AUTOMOC_MOC_OPTIONS "-DUSE_QTCHARTS" )
-    add_definitions( -DUSE_QTCHARTS )
-    set(IMPL_DIR impl_qtcharts)
-endif()
-
 QT5_ADD_RESOURCES (RES_SRC  resource.qrc)
 
 QT5_WRAP_UI ( UI_SRC
@@ -37,20 +25,19 @@ SET( PLOTTER_SRC
     tabbedplotwidget.cpp
     subwindow.cpp
     plotwidget.cpp
+    plotcurve.cpp
 
     customtracker.h
     plotcurve.h
-    plotseries.h
     plotwidget.h
     plotlegend.h
     plotmagnifier.h
     plotzoomer.h
 
     ${IMPL_DIR}/customtracker.cpp
-    ${IMPL_DIR}/plotcurve.cpp
+    ${IMPL_DIR}/plotcurve_impl.cpp
     ${IMPL_DIR}/plotgrid.cpp
     ${IMPL_DIR}/plotlegend.cpp
-    ${IMPL_DIR}/plotseries.cpp
     ${IMPL_DIR}/plotmagnifier.cpp
     ${IMPL_DIR}/plotwidget_impl.cpp
     ${IMPL_DIR}/plotzoomer.cpp
@@ -69,8 +56,7 @@ target_link_libraries(PlotJuggler
     ${Qt5Xml_LIBRARIES}
     ${Qt5Concurrent_LIBRARIES}
     colorwidgets
-    qtcharts
-   # qwt_static
+    ${CHART_LIB}
     )
 
 if(catkin_FOUND)

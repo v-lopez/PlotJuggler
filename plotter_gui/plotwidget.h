@@ -10,10 +10,8 @@
 #include <QTime>
 #include <memory>
 #include "plotcurve.h"
-#include "plotseries.h"
 
 class CurveTracker;
-class PlotCurve;
 class PlotGrid;
 class PlotLegend;
 class PlotMagnifier;
@@ -50,7 +48,7 @@ public:
 
     bool isEmpty() const;
 
-    const std::map<QString, std::shared_ptr<PlotCurve> > &curveList() const;
+	const std::map<QString, std::shared_ptr<PlotCurve> > &curveList() const;
 
     QDomElement xmlSaveState(QDomDocument &doc) const;
 
@@ -115,7 +113,7 @@ private slots:
     void on_externallyResized(const QRectF &new_rect);
 
 private:
-    std::map<QString, std::shared_ptr<PlotCurve> > _curve_list;
+	std::map<QString, std::shared_ptr<PlotCurve> > _curve_list;
 
     QAction *_action_removeCurve;
     QAction *_action_removeAllCurves;
@@ -130,13 +128,13 @@ private:
     void setAxisScale(Axis axisId, double min, double max, double step = 0 );
 
     PlotDataMap* _mapped_data;
-    PlotSeries::Transform _current_transform;
+	PlotCurve::Transform _current_transform;
 
     void buildActions();
 
     int   _fps_counter;
     QTime _fps_timeStamp;
-    PlotCurve::LineStyle _line_style;
+	PlotCurve::LineStyle _line_style;
 
     CurveTracker*  _tracker;
     PlotLegend*    _legend;

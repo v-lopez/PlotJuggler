@@ -444,10 +444,9 @@ void MainWindow::onPlotAdded(PlotWidget* plot)
     connect( this, SIGNAL(trackerTimeUpdated(QPointF)), plot, SLOT( replot() ));
 
     connect( this, SIGNAL(activateTracker(bool)),  plot->tracker(), SLOT(setEnabled(bool)) );
-    connect( this, SIGNAL(activateTracker(bool)),  plot, SLOT( replot() ));
+   //TODO?? connect( this, SIGNAL(activateTracker(bool)),  plot, SLOT( replot() ));
 
     plot->tracker()->setEnabled(  ui->pushButtonActivateTracker->isChecked() );
-
 }
 
 void MainWindow::onPlotMatrixAdded(PlotMatrix* matrix)

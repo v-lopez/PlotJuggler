@@ -61,15 +61,29 @@ else()
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 endif()
+################################################
 
+set(QWT true)
+
+if( QWT )
+    SET(CMAKE_AUTOMOC_MOC_OPTIONS "-DUSE_QWT")
+    add_definitions( -DUSE_QWT )
+    set(IMPL_DIR impl_qwt)
+    add_subdirectory( qwt/src )
+    set(CHART_LIB qwt_static)
+else()
+    SET(CMAKE_AUTOMOC_MOC_OPTIONS "-DUSE_QTCHARTS" )
+    add_definitions( -DUSE_QTCHARTS )
+    set(IMPL_DIR impl_qtcharts)
+    add_subdirectory( qtcharts )
+    set(CHART_LIB qtcharts)
+endif()
 
 add_subdirectory( color_widgets )
-#add_subdirectory( qwt/src )
-add_subdirectory( qtcharts )
 add_subdirectory( plotter_gui )
 
 #add_subdirectory( plugins/DataLoadCSV )
-#add_subdirectory( plugins/DataStreamSample )
+add_subdirectory( plugins/DataStreamSample )
 
 if(catkin_FOUND)
     add_subdirectory( plugins/ROS )
