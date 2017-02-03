@@ -17,18 +17,18 @@ template <typename Time, typename Value> class PlotDataGeneric
 {
 public:
 
-  struct RangeTime_{
+  struct RangeTime{
     Time min;
     Time max;
   };
 
-  struct RangeValue_{
+  struct RangeValue{
     Value min;
     Value max;
   };
 
-  typedef nonstd::optional<RangeTime_>  RangeTime;
-  typedef nonstd::optional<RangeValue_> RangeValue;
+  typedef nonstd::optional<RangeTime>  RangeTimeOpt;
+  typedef nonstd::optional<RangeValue> RangeValueOpt;
 
   class Point{
   public:
@@ -123,14 +123,12 @@ inline void PlotDataGeneric<Time, Value>::pushBack(Point point)
 {
   _x_points.push_back( point.x );
   _y_points.push_back( point.y );
- // while(_x_points.size() > _capacity) _x_points.pop_front();
-//  while(_y_points.size() > _capacity) _y_points.pop_front();
 }
 
 template < typename Time, typename Value>
 inline void PlotDataGeneric<Time, Value>::pushBackAsynchronously(Point point)
 {
- // std::lock_guard<std::mutex> lock(_mutex);
+  std::lock_guard<std::mutex> lock(_mutex);
   while(_pushed_points.size() > ASYNC_BUFFER_CAPACITY) _pushed_points.pop_front();
   _pushed_points.push_back( point );
 }
@@ -138,9 +136,11 @@ inline void PlotDataGeneric<Time, Value>::pushBackAsynchronously(Point point)
 template < typename Time, typename Value>
 inline bool PlotDataGeneric<Time, Value>::flushAsyncBuffer()
 {
- // std::lock_guard<std::mutex> lock(_mutex);
+  std::lock_guard<std::mutex> lock(_mutex);
 
-  if( _pushed_points.empty() ) return false;
+  int points_to_add = _pushed_points.size();
+
+  if( points_to_add == 0 ) return false;
 
   while( !_pushed_points.empty() )
   {
@@ -149,8 +149,23 @@ inline bool PlotDataGeneric<Time, Value>::flushAsyncBuffer()
       _y_points.push_back( point.y );
       _pushed_points.pop_front();
   }
-  while( _x_points.size() > 2  &&
-		(_x_points.back() - _x_points.front()) > _max_range_X )
+  int points_to_delete = 0;
+
+  for( int i=0; i< _x_points.size(); i++)
+  {
+	  if( (_x_points.back() - _x_points[i]) > _max_range_X ) {
+		  points_to_delete++;
+	  }
+	  else{
+		  break;
+	  }
+  }
+
+  if( abs( points_to_add - points_to_delete ) == 1){
+	  points_to_delete = points_to_add;
+  }
+
+  for (int i=0; i< points_to_delete; i++)
   {
 	  _x_points.pop_front();
 	  _y_points.pop_front();

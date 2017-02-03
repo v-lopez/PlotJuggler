@@ -18,7 +18,7 @@ PlotWidget::PlotWidget(PlotDataMap *datamap, QWidget *parent):
 	_grid( 0 ),
 	_mapped_data( datamap ),
 	_line_style( PlotCurve::LINES),
-    _current_transform( PlotCurve::noTransform )
+	_current_transform( PlotCurve::noTransform )
 {
 	using namespace QtCharts;
 
@@ -47,40 +47,50 @@ PlotWidget::PlotWidget(PlotDataMap *datamap, QWidget *parent):
 	chart()->createDefaultAxes();
 	//--------------------------
 
+	_replot_timer.setInterval(1);
+	_replot_timer.setSingleShot(true);
+	QObject::connect(&_replot_timer, &QTimer::timeout, this, &PlotWidget::replotHandle);
+
+	this->setContextMenuPolicy( Qt::ContextMenuPolicy::CustomContextMenu );
+	connect( this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(canvasContextMenuTriggered(QPoint)) );
+
 	//-------------------------
 
 	buildActions();
 
-	//connect( chart()->scene(), &QGraphicsScene::changed, this, &PlotWidget::replot  );
+	connect( chart()->scene(), &QGraphicsScene::changed, this, &PlotWidget::replot  );
 
 }
 
-QRectF PlotWidget::currentBoundingRect() const
+QRectF PlotWidget::boundingRect() const
 {
 	return this->chart()->boundingRect();
 }
 
 QPointF PlotWidget::canvasToPlot(QPoint point)
 {
-	return QPointF( );
+	return chart()->mapToValue( point);
 }
 
 QPoint PlotWidget::plotToCanvas(QPointF point)
 {
-	return QPoint();
+	QPointF p = chart()->mapToPosition(point);
+	return QPoint(p.x(), p.y());
 }
 
 void PlotWidget::replot()
 {
-	//if( _zoomer) _zoomer->setZoomBase( false );
+	static int count = 0;
+	qDebug() << "replot " << count++;
+	_replot_timer.start();
+}
 
-	//	qDebug() << "------\n" << _zoomer->zoomBase();
-	//	qDebug() << _zoomer->zoomRect();
-
+void PlotWidget::replotHandle()
+{
 	for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
 	{
-        PlotCurve* curve = static_cast<PlotCurve*>( it->second.get() );
-        curve->updateData(false);
+		PlotCurve* curve = static_cast<PlotCurve*>( it->second.get() );
+		curve->updateData(false);
 	}
 }
 
@@ -92,13 +102,12 @@ void PlotWidget::setTitle(QString text)
 
 void PlotWidget::setAxisScale(Axis axisId, double min, double max, double step)
 {
-	chart()->createDefaultAxes();
 	if (axisId == AXIS_X)
 	{
 		for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
 		{
-            PlotCurve* curve = static_cast<PlotCurve*>( it->second.get() );
-            curve->setSubsampleFactor( );
+			PlotCurve* curve = static_cast<PlotCurve*>( it->second.get() );
+			curve->setSubsampleFactor( );
 		}
 		this->chart()->axisX()->setRange( min, max );
 	}

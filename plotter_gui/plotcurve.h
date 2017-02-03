@@ -52,14 +52,14 @@ public:
 
 	void setStyle(LineStyle new_style);
 
-	PlotData::RangeTime  getRangeX()
+	PlotData::RangeTimeOpt  getRangeX()
 	{
 		if( this->size() < 2 )
-			return  PlotData::RangeTime() ;
+			return  PlotData::RangeTimeOpt() ;
 		else
-			return  PlotData::RangeTime( { sample(0).x(), sample( this->size() -1).x() } );
+			return  PlotData::RangeTimeOpt( { sample(0).x(), sample( this->size() -1).x() } );
 	}
-	PlotData::RangeValue getRangeY(int first_index, int last_index );
+	PlotData::RangeValueOpt getRangeY(int first_index, int last_index );
 
 	typedef enum{
 		noTransform,

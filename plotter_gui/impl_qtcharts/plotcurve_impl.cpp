@@ -2,7 +2,6 @@
 #include <limits>
 #include <stdexcept>
 #include "../plotwidget.h"
-#include <qwt_plot.h>
 #include <QtCharts/QLineSeries>
 
 PlotCurve::PlotCurve(QString name, PlotDataPtr base,  PlotWidget *parent):

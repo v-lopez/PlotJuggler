@@ -8,6 +8,7 @@
 #include <deque>
 #include <QMessageBox>
 #include <QTime>
+#include <QTimer>
 #include <memory>
 #include "plotcurve.h"
 
@@ -31,6 +32,10 @@ class PlotWidget : public QwtPlot
 class PlotWidget : public QtCharts::QChartView
 {
 	typedef QtCharts::QChartView BaseClass;
+	QTimer _replot_timer;
+
+	void replotHandle();
+
 #endif
 
 	Q_OBJECT
@@ -54,16 +59,16 @@ public:
 
     bool xmlLoadState(QDomElement &element, QMessageBox::StandardButton* answer);
 
-    QRectF currentBoundingRect() const;
 
-    PlotData::RangeTime maximumRangeX() const;
+	PlotData::RangeTimeOpt maximumRangeX() const;
 
-    PlotData::RangeValue maximumRangeY() const;
+	PlotData::RangeValueOpt maximumRangeY(const PlotData::RangeTime& range_X) const;
 
     const CurveTracker *tracker() const;
     CurveTracker *tracker();
 
-    void setScale( QRectF rect, bool emit_signal = true );
+	QRectF boundingRect() const;
+	void setBoundingRect( QRectF rect, bool emit_signal = true );
 
     void setTitle(QString text);
 

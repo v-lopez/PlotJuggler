@@ -2,8 +2,6 @@
 #include <limits>
 #include <stdexcept>
 #include "plotwidget.h"
-#include <qwt_plot.h>
-
 
 QPointF PlotCurve::sample(size_t i) const
 {
@@ -86,11 +84,11 @@ void PlotCurve::updateData(bool force_transform)
 	}
 }
 
-PlotData::RangeValue PlotCurve::getRangeY(int first_index, int last_index)
+PlotData::RangeValueOpt PlotCurve::getRangeY(int first_index, int last_index)
 {
 	if( first_index < 0 || last_index < 0 || first_index > last_index)
 	{
-		return PlotData::RangeValue();
+		return PlotData::RangeValueOpt();
 	}
 
 	const double first_Y = sample(first_index).y();
@@ -104,7 +102,7 @@ PlotData::RangeValue PlotCurve::getRangeY(int first_index, int last_index)
 		if( Y < y_min )      y_min = Y;
 		else if( Y > y_max ) y_max = Y;
 	}
-	return PlotData::RangeValue( { y_min, y_max } );
+	return PlotData::RangeValueOpt( { y_min, y_max } );
 }
 
 QRectF PlotCurve::maximumBoundingRect(double min_X, double max_X)

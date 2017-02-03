@@ -114,7 +114,9 @@ bool PlotWidget::addCurve(const QString &name, bool do_replot)
 	curve->updateData(true);
 
     auto range_X = maximumRangeX();
-    auto range_Y = maximumRangeY();
+	auto range_Y = maximumRangeY( range_X.value() );
+
+//	this->chart()->createDefaultAxes();
     this->setAxisScale( AXIS_X, range_X->min, range_X->max );
     this->setAxisScale( AXIS_Y, range_Y->min, range_Y->max );
 
@@ -231,7 +233,7 @@ QDomElement PlotWidget::xmlSaveState( QDomDocument &doc) const
     QDomElement plot_el = doc.createElement("plot");
 
     QDomElement range_el = doc.createElement("range");
-    QRectF rect = this->currentBoundingRect();
+	QRectF rect = this->boundingRect();
     range_el.setAttribute("bottom", QString::number(rect.bottom()) );
     range_el.setAttribute("top", QString::number(rect.top()) );
     range_el.setAttribute("left", QString::number(rect.left()) );
@@ -354,7 +356,7 @@ bool PlotWidget::xmlLoadState(QDomElement &plot_widget, QMessageBox::StandardBut
         rect.setLeft( rectangle.attribute("left").toDouble());
         rect.setRight( rectangle.attribute("right").toDouble());
 
-        this->setScale( rect, false);
+		this->setBoundingRect( rect, false);
     }
     return true;
 }
@@ -370,7 +372,7 @@ CurveTracker* PlotWidget::tracker()
     return _tracker;
 }
 
-void PlotWidget::setScale(QRectF rect, bool emit_signal)
+void PlotWidget::setBoundingRect(QRectF rect, bool emit_signal)
 {
     this->setAxisScale( AXIS_X, rect.left(), rect.right());
     this->setAxisScale( AXIS_Y, rect.bottom(), rect.top());
@@ -390,16 +392,16 @@ void PlotWidget::activateGrid(bool activate)
     _grid->setVisible(activate);
 }
 
-PlotData::RangeTime PlotWidget::maximumRangeX() const
+PlotData::RangeTimeOpt PlotWidget::maximumRangeX() const
 {
     double left   = 0;
     double right  = 0;
 
     if( _curve_list.size() == 0){
-        return PlotData::RangeTime();
+		return PlotData::RangeTimeOpt();
     }
 
-    bool first = true;
+
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
 		PlotCurve* curve = ( it->second.get() );
@@ -407,15 +409,15 @@ PlotData::RangeTime PlotWidget::maximumRangeX() const
 
         if( !range_X ) continue;
 
-        if( first ){
-            first = false;
+		if( it ==_curve_list.begin()) // first one
+		{
             left  = range_X->min;
             right = range_X->max;
-        }
-        else{
+		}
+		else{
             if( left  > range_X->min )    left  = range_X->min;
             if( right < range_X->max )    right = range_X->max;
-        }
+		}
     }
 
     if( fabs(right - left) <= std::numeric_limits<double>::epsilon() )
@@ -425,27 +427,25 @@ PlotData::RangeTime PlotWidget::maximumRangeX() const
     }
 
     _magnifier->setAxisLimits( AXIS_X, left, right);
-    return PlotData::RangeTime( { left, right } );
+	return PlotData::RangeTimeOpt( { left, right } );
 }
 
 //TODO report failure for empty dataset
-PlotData::RangeValue PlotWidget::maximumRangeY() const
+PlotData::RangeValueOpt PlotWidget::maximumRangeY(const PlotData::RangeTime& range_X) const
 {
     double top    = 0;
     double bottom = 0;
 
-    bool first = true;
+
     for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
     {
 		PlotCurve* curve = ( it->second.get() );
 
-        auto max_range_X = maximumRangeX();
-		auto range_X = curve->getRangeX();
+		auto curve_range_x = curve->getRangeX();
+		if( !curve_range_x ) continue;
 
-        if( !range_X ) continue;
-
-		int X0 = curve->data()->getIndexFromX(std::max(range_X->min, max_range_X->min));
-		int X1 = curve->data()->getIndexFromX(std::min(range_X->max, max_range_X->max));
+		int X0 = curve->data()->getIndexFromX(std::max(curve_range_x->min, range_X.min));
+		int X1 = curve->data()->getIndexFromX(std::min(curve_range_x->max, range_X.max));
 
         if( X0<0 || X1 <0)
         {
@@ -460,11 +460,10 @@ PlotData::RangeValue PlotWidget::maximumRangeY() const
                 continue;
             }
 
-            if( first ){
-                first = true;
+			if( it == _curve_list.begin() ) // first one
+			{
                 top    = range_Y->max;
                 bottom = range_Y->min;
-                first = false;
             }
             else{
                 if( top <    range_Y->max )    top    = range_Y->max;
@@ -485,7 +484,7 @@ PlotData::RangeValue PlotWidget::maximumRangeY() const
     }
 
     _magnifier->setAxisLimits( AXIS_Y, bottom, top);
-    return PlotData::RangeValue( { bottom,  top} );
+	return PlotData::RangeValueOpt( { bottom,  top} );
 }
 
 
@@ -558,37 +557,37 @@ void PlotWidget::on_externallyResized(const QRectF& rect)
 
 void PlotWidget::zoomOut(bool emit_signal)
 {
-    QRectF rect = currentBoundingRect();
     auto rangeX = maximumRangeX();
+	auto rangeY = maximumRangeY( rangeX.value() );
 
+	QRectF rect;
     rect.setLeft(  rangeX->min );
     rect.setRight( rangeX->max );
-
-    auto rangeY = maximumRangeY();
-
     rect.setBottom( rangeY->min );
     rect.setTop( rangeY->max );
-    this->setScale(rect);
+
+	this->setBoundingRect(rect);
 }
 
 void PlotWidget::on_zoomOutHorizontal_triggered(bool emit_signal)
 {
-    QRectF act = currentBoundingRect();
+	QRectF act = boundingRect();
     auto rangeX = maximumRangeX();
 
     act.setLeft( rangeX->min );
     act.setRight( rangeX->max );
-    this->setScale(act, emit_signal);
+	this->setBoundingRect(act, emit_signal);
 }
 
 void PlotWidget::on_zoomOutVertical_triggered(bool emit_signal)
 {
-    QRectF act = currentBoundingRect();
-    auto rangeY = maximumRangeY();
+	QRectF act = boundingRect();
+	PlotData::RangeTime range_X = {act.left(), act.right()};
+	auto rangeY = maximumRangeY( range_X );
 
     act.setBottom( rangeY->min );
     act.setTop(    rangeY->max );
-    this->setScale(act, emit_signal);
+	this->setBoundingRect(act, emit_signal);
 }
 
 void PlotWidget::on_noTransform_triggered(bool checked )

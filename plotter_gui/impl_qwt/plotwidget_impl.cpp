@@ -77,7 +77,7 @@ PlotWidget::PlotWidget(PlotDataMap *datamap, QWidget *parent):
 	//  this->axisScaleDraw( QwtPlot::yLeft   )->enableComponent( QwtAbstractScaleDraw::Labels, false );
 }
 
-QRectF PlotWidget::currentBoundingRect() const
+QRectF PlotWidget::boundingRect() const
 {
 	QRectF rect;
 	rect.setBottom( this->canvasMap( yLeft ).s1() );

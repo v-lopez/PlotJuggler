@@ -46,9 +46,7 @@ include_directories(
     )
 
 
-include_directories(
-    ./qwt/src
-    ./include ./color_widgets/include )
+include_directories( ./include ./color_widgets/include )
 
 
 if(catkin_FOUND)
@@ -71,6 +69,7 @@ if( QWT )
     set(IMPL_DIR impl_qwt)
     add_subdirectory( qwt/src )
     set(CHART_LIB qwt_static)
+    include_directories( ./qwt/src )
 else()
     SET(CMAKE_AUTOMOC_MOC_OPTIONS "-DUSE_QTCHARTS" )
     add_definitions( -DUSE_QTCHARTS )
