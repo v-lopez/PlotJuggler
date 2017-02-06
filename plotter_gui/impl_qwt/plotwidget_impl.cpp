@@ -96,7 +96,7 @@ QPointF PlotWidget::canvasToPlot(QPoint point)
 QPoint PlotWidget::plotToCanvas(QPointF point)
 {
 	return QPoint( transform( xBottom, point.x()),
-				   transform( yLeft,   point.y()) );
+                 transform( yLeft,   point.y()) );
 }
 
 void PlotWidget::replot()

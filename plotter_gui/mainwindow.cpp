@@ -374,7 +374,7 @@ void MainWindow::loadPlugins(QString directory_name)
 
 void MainWindow::buildData()
 {
-    size_t SIZE = 100*1000;
+    size_t SIZE = 1*1000;
 
     QStringList  words_list;
     words_list << "siam" << "tre" << "piccoli" << "porcellin"
@@ -392,11 +392,15 @@ void MainWindow::buildData()
         PlotDataPtr plot ( new PlotData(  ) );
         plot->setName(  name.toStdString() );
 
+        static double offset = 0;
+        offset += 10;
+
         double t = 0;
         for (unsigned indx=0; indx<SIZE; indx++)
         {
             t += 0.001;
-            plot->pushBack( PlotData::Point( t,  A*sin(B*t + C) + D*t*0.02 ) ) ;
+            plot->pushBack( PlotData::Point( t,  t+offset ) ) ;
+           //   plot->pushBack( PlotData::Point( t,  A*sin(B*t + C) + D*t*0.02 ) ) ;
         }
         QColor color = getColorHint();
         plot->setColorHint( color );

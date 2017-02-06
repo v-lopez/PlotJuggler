@@ -3,8 +3,10 @@
 #include "plotmatrix.h"
 #include "customtracker.h"
 
+#ifdef USE_QWT
 #include <qwt_plot.h>
 #include <qwt_scale_widget.h>
+#endif
 
 static int widget_uid = 0;
 
@@ -367,7 +369,7 @@ void PlotMatrix::maximumZoomOut()
         PlotWidget *plot = plotAt(i);
         if( plot->isEmpty() == false)
         {
-			plot->zoomOut(false);
+           plot->zoomOut(false);
         }
     }
     replot();
@@ -396,7 +398,7 @@ void PlotMatrix::on_singlePlotScaleChanged(PlotWidget *modified_plot, QRectF new
 
 void PlotMatrix::alignAxes( unsigned rowOrColumn, PlotWidget::Axis axisId )
 {
-	if ( axisId == PlotWidget::AXIS_Y )
+/*	if ( axisId == PlotWidget::AXIS_Y )
 	{
 		double maxExtent = 0;
 
@@ -453,11 +455,11 @@ void PlotMatrix::alignAxes( unsigned rowOrColumn, PlotWidget::Axis axisId )
 				scaleWidget->scaleDraw()->setMinimumExtent( maxExtent );
 			}
 		}
-	}
+  }*/
 }
 
 void PlotMatrix::alignScaleBorder(unsigned rowOrColumn, PlotWidget::Axis axisId )
-{
+{/*
 	if ( axisId == PlotWidget::AXIS_Y )
 	{
 		for ( unsigned col = 0; col < colsCount(); col++ )
@@ -475,5 +477,5 @@ void PlotMatrix::alignScaleBorder(unsigned rowOrColumn, PlotWidget::Axis axisId 
 			if ( p )
 				p->axisWidget( axisId )->setMinBorderDist( 15, 15 );
 		}
-	}
+  }*/
 }

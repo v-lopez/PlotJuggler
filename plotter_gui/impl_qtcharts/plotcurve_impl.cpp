@@ -23,7 +23,8 @@ void PlotCurve::setStyle(PlotCurve::LineStyle new_style)
 
 void PlotCurve::attach(PlotWidget *parent){
 	_parent = parent;
-	parent->chart()->addSeries(this);
+  _parent->chart()->addSeries(this);
+  _parent->chart()->createDefaultAxes();
 }
 
 void PlotCurve::detach(){

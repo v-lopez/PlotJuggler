@@ -42,12 +42,11 @@ PlotWidget::PlotWidget(PlotDataMap *datamap, QWidget *parent):
 
 	chart()->setAxisX( axis_x );
 	chart()->setAxisY( axis_y );
-
 	chart()->setVisible( true );
-	chart()->createDefaultAxes();
+
 	//--------------------------
 
-	_replot_timer.setInterval(1);
+  _replot_timer.setInterval(10);
 	_replot_timer.setSingleShot(true);
 	QObject::connect(&_replot_timer, &QTimer::timeout, this, &PlotWidget::replotHandle);
 
@@ -58,8 +57,7 @@ PlotWidget::PlotWidget(PlotDataMap *datamap, QWidget *parent):
 
 	buildActions();
 
-	connect( chart()->scene(), &QGraphicsScene::changed, this, &PlotWidget::replot  );
-
+ // connect( chart()->scene(), &QGraphicsScene::changed, this, &PlotWidget::replot  );
 }
 
 QRectF PlotWidget::boundingRect() const
@@ -80,13 +78,14 @@ QPoint PlotWidget::plotToCanvas(QPointF point)
 
 void PlotWidget::replot()
 {
-	static int count = 0;
-	qDebug() << "replot " << count++;
 	_replot_timer.start();
 }
 
 void PlotWidget::replotHandle()
 {
+  static int count = 0;
+  qDebug() << "replot " << count++;
+
 	for(auto it = _curve_list.begin(); it != _curve_list.end(); ++it)
 	{
 		PlotCurve* curve = static_cast<PlotCurve*>( it->second.get() );
