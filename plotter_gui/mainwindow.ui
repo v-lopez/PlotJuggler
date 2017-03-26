@@ -227,6 +227,41 @@ background: white;
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="pushButtonPlay">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>26</horstretch>
+              <verstretch>26</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>26</width>
+              <height>26</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>26</width>
+              <height>26</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="resource.qrc">
+              <normaloff>:/icons/resources/run_small@2x.png</normaloff>:/icons/resources/run_small@2x.png</iconset>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QSlider" name="horizontalSlider">
             <property name="focusPolicy">
              <enum>Qt::WheelFocus</enum>
@@ -283,13 +318,13 @@ background: white;
              <string> sec</string>
             </property>
             <property name="minimum">
-             <number>4</number>
+             <number>5</number>
             </property>
             <property name="maximum">
              <number>60</number>
             </property>
             <property name="value">
-             <number>4</number>
+             <number>5</number>
             </property>
            </widget>
           </item>

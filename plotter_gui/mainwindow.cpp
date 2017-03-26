@@ -1538,3 +1538,15 @@ void MainWindow::on_pushButtonActivateGrid_toggled(bool checked)
         plot->replot();
     });
 }
+
+void MainWindow::on_pushButtonPlay_toggled(bool checked)
+{
+
+}
+
+void MainWindow::on_playTimerUpdated()
+{
+   // onTrackerPositionUpdated
+}
+
+
